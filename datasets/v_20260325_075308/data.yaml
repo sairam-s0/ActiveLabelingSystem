@@ -1,0 +1,9 @@
+names:
+  0: bicycle
+  1: bus
+  2: car
+  3: motorcycle
+  4: truck
+path: e:\personal\ActiveLabelingSystem\datasets\v_20260325_075308
+train: images
+val: images

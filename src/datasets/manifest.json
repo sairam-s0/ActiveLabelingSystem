@@ -1,0 +1,82 @@
+{
+  "versions": {
+    "v_20260125_200820": {
+      "version": "v_20260125_200820",
+      "created": "2026-01-25T20:08:20.912642",
+      "description": "Manual snapshot - 0 images",
+      "parent_version": null,
+      "hash": "e3b0c44298fc1c14",
+      "statistics": {
+        "total_images": 0,
+        "total_instances": 0,
+        "num_classes": 0,
+        "class_distribution": {},
+        "avg_entropy": 0.0
+      },
+      "class_mapping": {},
+      "files": {
+        "images": "datasets\\v_20260125_200820\\images",
+        "labels": "datasets\\v_20260125_200820\\labels",
+        "yaml": "datasets\\v_20260125_200820\\data.yaml"
+      }
+    },
+    "v_20260201_210810": {
+      "version": "v_20260201_210810",
+      "created": "2026-02-01T21:08:10.093561",
+      "description": "Manual snapshot - 0 images",
+      "parent_version": null,
+      "hash": "a24e64e7a9ff4e3b",
+      "statistics": {
+        "total_images": 1,
+        "total_instances": 2,
+        "num_classes": 1,
+        "class_distribution": {
+          "car": 2
+        },
+        "avg_entropy": 0.0
+      },
+      "class_mapping": {
+        "car": 0
+      },
+      "files": {
+        "images": "datasets\\v_20260201_210810\\images",
+        "labels": "datasets\\v_20260201_210810\\labels",
+        "yaml": "datasets\\v_20260201_210810\\data.yaml"
+      }
+    },
+    "v_20260221_030911": {
+      "version": "v_20260221_030911",
+      "created": "2026-02-21T03:09:12.205675",
+      "description": "Manual snapshot - 16 images",
+      "parent_version": null,
+      "hash": "e52508658cca65bd",
+      "statistics": {
+        "total_images": 36,
+        "total_instances": 41,
+        "num_classes": 5,
+        "class_distribution": {
+          "car": 26,
+          "bicycle": 1,
+          "bus": 2,
+          "truck": 10,
+          "motorcycle": 2
+        },
+        "avg_entropy": 0.0
+      },
+      "class_mapping": {
+        "bicycle": 0,
+        "bus": 1,
+        "car": 2,
+        "motorcycle": 3,
+        "truck": 4
+      },
+      "files": {
+        "images": "datasets\\v_20260221_030911\\images",
+        "labels": "datasets\\v_20260221_030911\\labels",
+        "yaml": "datasets\\v_20260221_030911\\data.yaml"
+      }
+    }
+  },
+  "latest": "v_20260221_030911",
+  "lineage": {}
+}

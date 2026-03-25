@@ -1,0 +1,20 @@
+{
+  "version": "v_20260125_200820",
+  "created": "2026-01-25T20:08:20.912642",
+  "description": "Manual snapshot - 0 images",
+  "parent_version": null,
+  "hash": "e3b0c44298fc1c14",
+  "statistics": {
+    "total_images": 0,
+    "total_instances": 0,
+    "num_classes": 0,
+    "class_distribution": {},
+    "avg_entropy": 0.0
+  },
+  "class_mapping": {},
+  "files": {
+    "images": "datasets\\v_20260125_200820\\images",
+    "labels": "datasets\\v_20260125_200820\\labels",
+    "yaml": "datasets\\v_20260125_200820\\data.yaml"
+  }
+}

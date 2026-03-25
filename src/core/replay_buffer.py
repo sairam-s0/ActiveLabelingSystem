@@ -13,20 +13,6 @@ class ReplayBuffer:
         return len(self.buffer)
 
     def add(self, samples):
-        """
-        Add samples to replay buffer with deduplication.
-        
-        Args:
-            samples: a single dict OR list of dicts with structure:
-                {
-                    'image_path': str,
-                    'entropy': float,
-                    'detections': list,
-                    'timestamp': str (ISO format, optional),
-                    'width': int,
-                    'height': int
-                }
-        """
         # 🔧 STEP 1: Normalize input to list of dicts
         if isinstance(samples, dict):
             samples = [samples]

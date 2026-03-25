@@ -8,7 +8,7 @@ import yaml
 from datetime import datetime
 import torch
 
-@ray.remote(num_gpus=0.4)
+@ray.remote
 class ShadowTrainer:
     """
     Ray actor for asynchronous model training with replay buffer integration.
@@ -147,13 +147,14 @@ class ShadowTrainer:
                 print(f"[Shadow] Epoch {self.current_epoch}/{self.total_epochs}, Loss: {self.current_loss:.4f}")
             
             # Train with frozen backbone
+            train_device = 0 if torch.cuda.is_available() else 'cpu'
             results = model.train(
                 data=str(dataset_yaml),
                 epochs=self.total_epochs,
                 imgsz=640,
                 batch=8,
                 patience=10,
-                device=0,  # GPU index (use 'cpu' for CPU training)
+                device=train_device,
                 verbose=False,
                 project=str(tmp_dir),
                 name="shadow_run",

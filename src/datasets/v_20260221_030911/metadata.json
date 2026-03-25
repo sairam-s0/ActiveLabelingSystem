@@ -1,0 +1,32 @@
+{
+  "version": "v_20260221_030911",
+  "created": "2026-02-21T03:09:12.205675",
+  "description": "Manual snapshot - 16 images",
+  "parent_version": null,
+  "hash": "e52508658cca65bd",
+  "statistics": {
+    "total_images": 36,
+    "total_instances": 41,
+    "num_classes": 5,
+    "class_distribution": {
+      "car": 26,
+      "bicycle": 1,
+      "bus": 2,
+      "truck": 10,
+      "motorcycle": 2
+    },
+    "avg_entropy": 0.0
+  },
+  "class_mapping": {
+    "bicycle": 0,
+    "bus": 1,
+    "car": 2,
+    "motorcycle": 3,
+    "truck": 4
+  },
+  "files": {
+    "images": "datasets\\v_20260221_030911\\images",
+    "labels": "datasets\\v_20260221_030911\\labels",
+    "yaml": "datasets\\v_20260221_030911\\data.yaml"
+  }
+}

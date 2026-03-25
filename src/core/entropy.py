@@ -45,10 +45,6 @@ class EntropyCalculator:
                         probs = torch.softmax(logits[0], dim=-1).cpu().numpy()
                         return EntropyCalculator.normalized_entropy(probs.tolist())
 
-        # ❗ Fallback for standard YOLOv8 (only [x,y,x,y,conf,cls] per box)
-        # We simulate a probability distribution:
-        #   p(winner) = confidence
-        #   p(other)  = (1 - confidence) / (num_classes - 1)
         try:
             # YOLOv8 Results object: box_output.boxes contains detection data
             if hasattr(box_output, 'boxes') and box_output.boxes is not None:

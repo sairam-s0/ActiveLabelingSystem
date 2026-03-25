@@ -1,0 +1,5 @@
+names:
+  0: car
+path: E:\personal\dynamic\src\datasets\v_20260201_210810
+train: images
+val: images

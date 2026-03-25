@@ -1,348 +1,208 @@
 # LabelOps
-**LabelOps – A local-first AI-assisted data labeling system with continual learning and background model training.**
-<p align="center">
-  <img src="./images/Logo.svg" width="400" alt="VyomaX Banner"/>
-</p>
 
-# LabelOps 
+Local-first AI-assisted image labeling with active learning, manual box tools, background retraining, and dataset version snapshots.
 
-<p align="center">
-  <strong>Stop labeling everything. Label what matters.</strong>
-</p>
+## What is new
 
-<p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-installation">Installation</a> •
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="../../wiki">Wiki</a> •
-  <a href="#-license">License</a>
-</p>
-
----
-
-## 🌟 What is this?
-
-An intelligent active learning system that **reduces your labeling work by 60-80%**. It automatically identifies uncertain predictions where the model needs help, trains improved models in the background, and continuously gets better as you label.
-
-**The Problem:** Labeling thousands of images is tedious and wasteful. Most images don't teach the model anything new.
-
-**The Solution:** This system uses **entropy-based uncertainty sampling** to find the ~200 images that matter most, then auto-trains improved models while you work.
-
-<p align="center">
-  <img src="./images/normal_gui_img.png" alt="Workflow" width="700"/>
-</p>
-
----
+- Modular app structure (`src/app`, `src/core`, `src/features`) for cleaner maintenance.
+- Active learning image prioritization when loading folders (unlabeled images first, sorted by uncertainty).
+- Retraining policy engine with multi-signal checks (sample count, time, entropy shift, class balance, confidence drift).
+- Dataset versioning from UI with metadata, hash integrity, and manifest tracking.
+- Label format selection at folder load time: `COCO JSON` or `Plain JSON`.
+- Safer persistence:
+  - autosave per folder (`labels_autosave.json`)
+  - internal state store (`.labels_internal.json`)
+  - atomic file writes for exports.
+- Improved manual labeling UX:
+  - floating toolbox
+  - quick class switching (1-9)
+  - undo/delete shortcuts
+  - inline floating action toolbar.
+- Better training controls in UI:
+  - force retrain
+  - live queue/training status
+  - shadow model promotion with validation warning flow.
 
 ## Features
 
-### Smart Sample Selection
-- **Entropy calculation** measures model uncertainty (0 = confident, 1 = confused)
-- **Auto-queuing** for high-uncertainty images (entropy ≥ 0.6)
-- Focus your time where it counts
+### Active learning and triage
 
-### Background Training
-- **Shadow models** train asynchronously using Ray
-- **Zero interruption** to your labeling workflow
-- **30 samples** trigger automatic training
+- Entropy-aware detection metadata is attached to predictions.
+- Folder loading prioritizes unlabeled images for high-value review.
+- Replay buffer preserves historical samples for continual learning.
 
-### Catastrophic Forgetting Prevention
-- **Replay buffer** maintains 200 high-quality historical samples
-- **Class-balanced sampling** ensures all classes stay learned
-- **Frozen backbone** preserves pre-trained features
+### Retraining workflow
 
-### Production Ready
-- **Model versioning** with atomic promotion
-- **Rollback support** to any previous version
-- **Validation checks** before model updates
-- **Class mapping** auto-generated and maintained
+- Background training via Ray shadow trainer.
+- Training trigger policy requires minimum sample count plus at least one urgency signal.
+- Promotion flow supports validation and explicit override confirmation.
 
----
+### Dataset versioning
+
+- Create version snapshots from current labels.
+- Stores YOLO-style labels, copied images, metadata, and a dataset hash.
+- Keeps lineage and latest pointer in `src/datasets/manifest.json`.
+
+### Label export
+
+- `Plain JSON` output (`labels.json`) for direct app consumption.
+- `COCO JSON` output (`labels_coco.json`) for downstream ML pipelines.
+
+### Manual labeling mode
+
+- Draw boxes directly on the canvas.
+- Per-box class assignment with deterministic class colors.
+- Save-and-next loop without leaving manual mode.
+
+## Project structure
+
+```text
+LabelOps/
+  images/
+  src/
+    app/
+      window.py
+      dialogs.py
+      state.py
+      actions.py
+    core/
+      data_manager.py
+      entropy.py
+      sample_selector.py
+      retrain_policy.py
+      dataset_versioner.py
+      replay_buffer.py
+      shadow_trainer.py
+      training_orchestrator.py
+      model_manager.py
+      feedback_validator.py
+    features/
+      manual.py
+      shortcut_manager.py
+      shortcut_config.py
+      toolbar_manager.py
+      toolbar_widget.py
+      toolbar_styles.py
+    datasets/
+    models/
+    main.py
+    requirements.txt
+    run_tests.bat
+  README.md
+  GUID.md
+```
 
 ## Installation
 
-### One-Command Setup
-
 ```bash
 git clone https://github.com/sairam-s0/LabelOps.git
-cd LabelOps/src
-python test_system.py
+cd LabelOps
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# Linux/macOS
+# source .venv/bin/activate
+
+pip install -r src/requirements.txt
 ```
 
-**That's it!** The test script automatically:
-- ✅ Checks Python version (3.8+)
-- ✅ Installs all dependencies
-- ✅ Downloads base YOLO model
-- ✅ Verifies CUDA availability
-- ✅ Initializes Ray
-- ✅ Tests all core modules
-- ✅ Validates class mappings
-- ✅ Runs sample inference
+Optional: install CUDA-enabled PyTorch for GPU inference/training from https://pytorch.org/get-started/locally/.
 
-### Manual Installation (Optional)
+## Run the app
+
+From repo root:
 
 ```bash
-# Clone repo
-git clone https://github.com/sairam-s0/LabelOps.git
-cd LabelOps\src
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Download base model
-python -c "from ultralytics import YOLO; YOLO('yolov8n.pt')"
-
-# Verify
-python -c "import ray; from src.core import *; print('✓ Ready')"
+python src/main.py
 ```
 
+## How to use
 
-**for more set-up instructions refer to [SETUP-GUID](./GUID.md)**
+### 1. Select image folder and output format
 
+- Click `Select Folder`.
+- Choose output format:
+  - `COCO JSON` -> writes `labels_coco.json`
+  - `Plain JSON` -> writes `labels.json`
+- The app also keeps internal state in `.labels_internal.json` and autosave in `labels_autosave.json` inside the selected folder.
 
+![Folder Selection](./images/folder_selection.png)
+![Format Selection](./images/format_selection.png)
 
-### Requirements
+### 2. Select classes
 
-```txt
-ultralytics>=8.0.0
-ray>=2.0.0
-numpy>=1.21.0
-torch>=2.0.0
-PyQt6>=6.4.0
-opencv-python>=4.7.0
-pyyaml>=6.0
-```
+- Click `Select Classes`.
+- Pick one or more classes.
+- Add custom classes from the same dialog when needed.
 
----
+![Class Selection](./images/class_selection.png)
 
-## Quick Start
+### 3. Start labeling
 
-### 1. Run the GUI
+- Click `START`.
+- Review detections and use bottom actions:
+  - `Accept (A)`
+  - `Reject (R)`
+  - `Skip (N)`
+  - `Manual (M)`
 
-```bash
-python main.py
-```
+![Active Learning Options](./images/active_learning_options.png)
 
-<p align="center">
-  <img src="./images/gui_img.png" alt="GUI" width="700"/>
-</p>
+### 4. Manual mode (box drawing)
 
-### 2. Label High-Value Images
+![Normal GUI](./images/normal_full_gui.png)
 
-1. **Load images** → System runs inference
-2. **Check entropy** → Red = uncertain, Green = confident
-3. **Label red boxes** → Model is confused here
-4. **Accept labels** → Auto-added to training queue
+- Draw boxes by click-drag on canvas.
+- Save boxes and move next with:
+  - `Space` or `Enter` -> save and next
+  - `Esc` -> exit manual mode
+  - `Ctrl+Z` -> undo last box
+  - `Delete` -> delete last box
+  - `1..9` -> switch class index
 
-### 3. Auto-Training Kicks In
+![Manual Labelling](./images/manual_labelling.png)
 
-When you hit **30 labeled samples**:
-- Shadow model trains in background (Ray)
-- Progress shown in status bar
-- Takes 5-10 minutes (GPU) or 20-30 minutes (CPU)
+### 5. Monitor active learning and training
 
-### 4. Promote the Model
+- Left panel shows:
+  - entropy of current image
+  - queue size
+  - training progress/status.
+- Use `Force Retrain` if you want to bypass normal policy checks (still requires minimum samples).
 
-When training completes:
-- Click **"Promote Shadow Model"**
-- New model becomes active
-- Inference improves immediately
+![Dataset Statistics](./images/dataset_stats.png)
 
-### 5. Repeat
+### 6. Version and promote
 
-The cycle continues - each round needs fewer labels as the model gets smarter.
+- `Create Version` creates a dataset snapshot in `src/datasets/v_YYYYMMDD_HHMMSS/`.
+- `List Versions` shows stored versions and metadata.
+- `Promote Shadow` promotes trained candidate model to active model.
 
----
+## Output files and artifacts
 
-## Architecture
+For each selected image folder:
 
-```
-┌──────────────────────────────────────────┐
-│          Your Application                │
-│    (GUI / CLI / Integration)             │
-└───────────────┬──────────────────────────┘
-                │
-┌───────────────┴──────────────────────────┐
-│         Core Components                  │
-├──────────┬──────────┬────────────────────┤
-│Inference │Data Mgr  │Model Mgr           │
-│• predict │• labels  │• versions          │
-│• entropy │• mapping │• promote/rollback  │
-└──────────┴──────────┴────────────────────┘
-                │
-┌───────────────┴──────────────────────────┐
-│      Training (Ray Distributed)          │
-├──────────────┬───────────────────────────┤
-│Shadow Trainer│Replay Buffer              │
-│• async train │• balanced sampling        │
-│• 50 epochs   │• forgetting prevention    │
-└──────────────┴───────────────────────────┘
-```
+- `labels.json` or `labels_coco.json` (selected format)
+- `.labels_internal.json` (internal metadata store)
+- `labels_autosave.json` (session recovery)
 
----
+In project directories:
 
-## Project Structure
+- `src/models/active_model.pt` - active inference model
+- `src/models/shadow_candidate.pt` - latest trained candidate (when available)
+- `src/datasets/manifest.json` - dataset version registry
+- `src/datasets/v_*/` - dataset snapshots
 
-```
-labelops/
-├── images/                     # Docs & UI screenshots
-│   ├── Logo.svg
-│   ├── gui_img.png
-│   ├── normal_gui_img.png
-│   ├── class_selection_img.png
-│   ├── manual_marking_img.png
-│   └── image_folder_img.png
-│
-├── src/
-│   ├── core/                   # Core ML + training logic
-│   │   ├── data_manager.py
-│   │   ├── entropy.py
-│   │   ├── inference.py
-│   │   ├── model_manager.py
-│   │   ├── replay_buffer.py
-│   │   └── shadow_trainer.py
-│   │
-│   ├── features/               # UI features
-│   │   └── manual.py
-│   │
-│   ├── models/                 # Model storage
-│   │   ├── yolov8n.pt
-│   │   ├── active_model.pt
-│   │   └── versions/
-│   │
-│   ├── main.py                 # PyQt GUI entry
-│   ├── test_system.py          # One-command system test
-│   └── labels.json
-|   └── requirements.txt
-|   └── run_tests.bat      
-│
-├── README.md
-├── GUID.md
-├── LICENSE
+## Notes
 
-
-```
-
----
-
-## How It Works
-
-### 1. Entropy Measures Uncertainty
-
-```
-High Confidence (Skip)          High Uncertainty (Label!)
-Probs: [0.95, 0.03, 0.02]      Probs: [0.35, 0.33, 0.32]
-Entropy: 0.15 ✓                Entropy: 0.98 ⚠️
-```
-
-### 2. Training Pipeline
-
-```
-30 new samples + 10 replay samples
-        ↓
-Shadow Trainer (Ray Actor)
-        ↓
-Fine-tune with frozen backbone (prevents forgetting)
-        ↓
-Validate → User approves → Promote to active
-```
-
-### 3. Continuous Improvement
-
-Each training cycle requires fewer labels because the model gets better at knowing what it doesn't know.
-
----
-
-## 📚 Documentation
-
-Full documentation available in the [GUID](./GUID.md):
-- **API Reference** - All classes and methods
-- **Configuration Guide** - Tune for your use case
-- **Troubleshooting** - Common issues solved
-- **Advanced Usage** - Custom integrations
-- **Performance Tips** - Optimize for speed
-
----
+- If Ray is unavailable, labeling still works; background training features are reduced.
+- If class mapping is not available yet, trainer creation waits until first labels are saved.
+- Restart app after model promotion for a clean reload of active weights.
 
 ## Contributing
 
-Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open a Pull Request
-
----
+Please read `CONTRIBUTING.md`.
 
 ## License
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-## Acknowledgments
-
-- **Ultralytics** for YOLOv8
-- **Ray Project** for distributed computing
-- Active learning research community
-
----
-
-<p align="center">
-  <a href="https://github.com/sairam-s0/LabelOps/issues">Report Bug</a> •
-  <a href="https://github.com/sairam-s0/LabelOps/issues">Request Feature</a> •
-</p>
-
-### Contribution Guidelines
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## Acknowledgments
-
-- **Ultralytics** for YOLO implementation
-- **Ray Project** for distributed computing framework
-- Active Learning research community
-- Contributors and early adopters
-
----
-
-## 📞 Support
-
-- 📧 Email: sairam.1242006@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/sairam-s0/LabelOps/issues)
-- 📖 Docs: [Full Documentation](https://docs.example.com)
-
----
-
-## Roadmap
-
-- [ ] Multi-GPU training support                    ***coming soon***
-- [ ] Web-based annotation interface                ***coming soon***
-- [ ] Automatic hyperparameter tuning               ***coming soon***
-- [ ] Support for segmentation models               ***coming soon***
-- [ ] Cloud training integration (AWS, GCP)         ***coming soon***
-- [ ] Model ensemble support                        ***coming soon***
-- [ ] Active learning metrics dashboard             ***coming soon***
-
----
-
-<p align="center">
-  <strong>pip installation support coming soon.</strong>
-</p>
-
-<p align="center">
-  <strong>Built to reduce manual data labeling.</strong>
-</p>
+MIT. See `LICENSE`.

@@ -9,12 +9,7 @@ class DataManager:
         self.path = Path(json_path)
         self.entropy_threshold = entropy_threshold  # ✅ Configurable threshold
         self.lock = Lock()
-        self.data = {
-            "images": {},
-            "training_queue": [],
-            "trained_images": [],
-            "class_mapping": {}
-        }
+        self.data = self._empty_data()
         self._load()
         # Build class mapping on init in case file exists
         if self.data["images"]:
@@ -29,6 +24,24 @@ class DataManager:
                     self.data = loaded
             except Exception as e:
                 print(f"[DataManager] Error loading data: {e}")
+
+    def _empty_data(self):
+        return {
+            "images": {},
+            "training_queue": [],
+            "trained_images": [],
+            "class_mapping": {}
+        }
+
+    def reset(self):
+        self.data = self._empty_data()
+
+    def set_path(self, json_path: str):
+        self.path = Path(json_path)
+        self.reset()
+        self._load()
+        if self.data["images"]:
+            self.build_class_mapping()
 
     def save(self):
         with self.lock:
@@ -263,3 +276,71 @@ class DataManager:
             "class_counts": class_counts,
             "num_classes": len(self.data["class_mapping"])
         }
+
+    def export_simple_json(self) -> dict:
+        """Export labels to a simple JSON mapping."""
+        exported = {}
+        for img_path, img_data in self.data["images"].items():
+            exported[img_path] = {
+                "detections": img_data.get("detections", []),
+                "timestamp": img_data.get("timestamp"),
+                "image_width": img_data.get("width", 0),
+                "image_height": img_data.get("height", 0),
+                "entropy": img_data.get("entropy", 0.0),
+                "status": img_data.get("status", "labeled")
+            }
+        return exported
+
+    def export_coco(self, image_root=None) -> dict:
+        """Export labels to COCO JSON format."""
+        coco = {"images": [], "annotations": [], "categories": []}
+
+        class_names = sorted(self.data["class_mapping"].keys())
+        class_to_id = {name: idx + 1 for idx, name in enumerate(class_names)}
+        for name in class_names:
+            coco["categories"].append({
+                "id": class_to_id[name],
+                "name": name,
+                "supercategory": "object"
+            })
+
+        ann_id = 1
+        image_items = sorted(self.data["images"].items(), key=lambda x: x[0])
+        for img_id, (img_path, img_data) in enumerate(image_items, start=1):
+            file_name = Path(img_path).name
+            if image_root:
+                try:
+                    file_name = str(Path(img_path).relative_to(image_root))
+                except Exception:
+                    file_name = Path(img_path).name
+
+            coco["images"].append({
+                "id": img_id,
+                "file_name": file_name,
+                "width": img_data.get("width", 0),
+                "height": img_data.get("height", 0)
+            })
+
+            for det in img_data.get("detections", []):
+                bbox = det.get("bbox", [0, 0, 0, 0])
+                if len(bbox) != 4:
+                    continue
+                x1, y1, x2, y2 = bbox
+                w = max(0.0, float(x2) - float(x1))
+                h = max(0.0, float(y2) - float(y1))
+                cls_name = det.get("class", "unknown")
+                cat_id = class_to_id.get(cls_name)
+                if not cat_id:
+                    continue
+
+                coco["annotations"].append({
+                    "id": ann_id,
+                    "image_id": img_id,
+                    "category_id": cat_id,
+                    "bbox": [float(x1), float(y1), w, h],
+                    "area": w * h,
+                    "iscrowd": 0
+                })
+                ann_id += 1
+
+        return coco

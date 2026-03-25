@@ -1,0 +1,9 @@
+names:
+  0: bicycle
+  1: bus
+  2: car
+  3: motorcycle
+  4: truck
+path: E:\personal\dynamic\src\datasets\v_20260221_030911
+train: images
+val: images

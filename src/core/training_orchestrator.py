@@ -1,14 +1,44 @@
 # src/core/training_orchestrator.py
-"""
-Training Orchestrator - Manages background training lifecycle
-Handles Ray initialization, training triggers, and model promotion
-"""
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+
+import os
+os.environ['RAY_SCHEDULER_EVENTS'] = '0'
+os.environ['RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO'] = '0'
+os.environ.setdefault('RAY_USAGE_STATS_ENABLED', '0')
 
 import ray
-from pathlib import Path
 from typing import Optional, Dict, List, Callable
-from datetime import datetime
+import threading
+import time
 
+def start_orchestrator_monitor(orchestrator, callback):
+    """Background thread that polls Ray status safely"""
+    def loop():
+        while True:
+            try:
+                # Check completion
+                result = orchestrator.check_training_completion()
+                if result:
+                    callback({'type': 'completion', 'data': result})
+                
+                # Check status
+                status = orchestrator.get_training_status()
+                callback({'type': 'status', 'data': status})
+                
+            except Exception as e:
+                print(f"[Monitor] Error: {e}")
+            
+            time.sleep(1.0)
+    
+    t = threading.Thread(target=loop, daemon=True)
+    t.start()
 
 class TrainingOrchestrator:
     """Manages shadow model training workflow."""
@@ -46,7 +76,7 @@ class TrainingOrchestrator:
         self.on_training_failed: Optional[Callable] = None
         
         # Initialize Ray
-        self._init_ray()
+        #self._init_ray()
     
     def _init_ray(self) -> bool:
         """Initialize Ray for distributed training."""
@@ -58,8 +88,11 @@ class TrainingOrchestrator:
             
             ray.init(
                 num_gpus=self.num_gpus,
+                num_cpus=2,
                 ignore_reinit_error=True,
-                logging_level="ERROR"
+                logging_level="ERROR",
+                include_dashboard=False,
+                _metrics_export_port=0,
             )
             print("[Orchestrator] Ray initialized successfully")
             self.ray_initialized = True
@@ -76,6 +109,10 @@ class TrainingOrchestrator:
             print(f"[Orchestrator] Ray init failed: {e}")
             self.ray_initialized = False
             return False
+    def initialize_ray(self):
+        if self.ray_initialized:
+            return True
+        return self._init_ray()
     
     def _try_create_trainer(self):
         """Attempt to create shadow trainer if class mapping exists."""
@@ -88,15 +125,21 @@ class TrainingOrchestrator:
             return False
         
         try:
-            from src.core.shadow_trainer import ShadowTrainer
+            from core.shadow_trainer import ShadowTrainer
             
             base_model = self.model_manager.resolve_active_path()
-            self.shadow_trainer = ShadowTrainer.remote(
+            cluster = ray.cluster_resources() or {}
+            available_gpus = float(cluster.get("GPU", 0.0) or 0.0)
+            actor_gpus = 0.4 if (self.num_gpus and available_gpus > 0) else 0.0
+            self.shadow_trainer = ShadowTrainer.options(num_gpus=actor_gpus).remote(
                 base_model_path=base_model,
                 class_mapping=class_mapping,
                 min_samples=self.min_samples
             )
-            print(f"[Orchestrator] Shadow trainer created with {len(class_mapping)} classes")
+            print(
+                f"[Orchestrator] Shadow trainer created with {len(class_mapping)} classes "
+                f"(num_gpus={actor_gpus})"
+            )
             return True
             
         except Exception as e:
@@ -176,12 +219,16 @@ class TrainingOrchestrator:
             replay_paths = self.data_manager.get_replay_samples(count=10)
             replay_samples = self.data_manager.prepare_training_samples(replay_paths)
             
-            # Add current samples to training batch
-            all_samples = samples + replay_samples
-            
-            # Start training
+            # Fill trainer buffer with fresh samples, then train with replay data
             print(f"[Orchestrator] Starting training: {len(samples)} new + {len(replay_samples)} replay")
-            self.training_future = self.shadow_trainer.train.remote(all_samples)
+            add_result = ray.get(self.shadow_trainer.add_labels.remote(samples), timeout=10)
+            if not add_result.get('ready_to_train'):
+                print(
+                    "[Orchestrator] Trainer not ready after add_labels: "
+                    f"{add_result.get('buffer_size', 0)}/{self.min_samples}"
+                )
+                return False
+            self.training_future = self.shadow_trainer.train.remote(replay_samples)
             
             # Notify UI
             if self.on_status_change:
@@ -345,8 +392,13 @@ class TrainingOrchestrator:
         """Cleanup resources."""
         print("[Orchestrator] Shutting down...")
         
-        # Ray will be shut down when the process exits
-        # We don't explicitly call ray.shutdown() here to avoid conflicts
+        # Explicitly shutdown Ray to kill daemon threads
+        if ray.is_initialized():
+            try:
+                ray.shutdown()
+                print("[Orchestrator] Ray shutdown complete")
+            except Exception as e:
+                print(f"[Orchestrator] Ray shutdown error: {e}")
         
         self.shadow_trainer = None
         self.training_future = None
