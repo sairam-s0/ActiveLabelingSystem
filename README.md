@@ -1,4 +1,6 @@
-# LabelOps
+# ActiveLabelingSystem
+
+Formerly known as **LabelOps**.
 
 Local-first AI-assisted image labeling with active learning, manual box tools, background retraining, and dataset version snapshots.
 
@@ -57,7 +59,7 @@ Local-first AI-assisted image labeling with active learning, manual box tools, b
 ## Project structure
 
 ```text
-LabelOps/
+ActiveLabelingSystem/
   images/
   src/
     app/
@@ -95,8 +97,8 @@ LabelOps/
 ## Installation
 
 ```bash
-git clone https://github.com/sairam-s0/LabelOps.git
-cd LabelOps
+git clone https://github.com/sairam-s0/ActiveLabelingSystem.git
+cd ActiveLabelingSystem
 python -m venv .venv
 # Windows
 .venv\Scripts\activate
