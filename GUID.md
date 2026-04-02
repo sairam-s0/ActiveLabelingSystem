@@ -1,4 +1,4 @@
-# LabelOps - Setup and Preflight Guide
+# ActiveLabelingSystem - Setup and Preflight Guide
 
 This guide explains how to install LabelOps and verify your environment with the new `run_tests.bat` preflight checker.
 
@@ -83,6 +83,4 @@ If CUDA is required for your workflow, install CUDA-enabled PyTorch from:
 https://pytorch.org/get-started/locally/
 
 ## Notes
-
-- `run_tests.bat` does not use score/grade output.
-- It is designed for clean CI/local preflight validation with clear actionable messages.
+- `run_tests.bat` is designed for clean CI/local preflight validation with clear actionable messages.
