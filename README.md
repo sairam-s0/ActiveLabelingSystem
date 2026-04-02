@@ -188,13 +188,6 @@ For each selected image folder:
 - `.labels_internal.json` (internal metadata store)
 - `labels_autosave.json` (session recovery)
 
-In project directories:
-
-- `src/models/active_model.pt` - active inference model
-- `src/models/shadow_candidate.pt` - latest trained candidate (when available)
-- `src/datasets/manifest.json` - dataset version registry
-- `src/datasets/v_*/` - dataset snapshots
-
 ## Notes
 
 - If Ray is unavailable, labeling still works; background training features are reduced.
