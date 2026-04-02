@@ -113,7 +113,7 @@ class ManualToolbox(QDialog):
         layout.setContentsMargins(12, 12, 12, 12)
         
         # header
-        header = QLabel("📍 Manual Labeling")
+        header = QLabel(" Manual Labeling")
         header.setStyleSheet(f"""
             QLabel {{
                 font-size: 13px;
@@ -262,7 +262,7 @@ class ManualToolbox(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(8)
         
-        done_btn = QPushButton("✓ Done")
+        done_btn = QPushButton(" Done")
         done_btn.setFixedHeight(40)
         done_btn.setStyleSheet(f"""
             QPushButton {{
@@ -280,7 +280,7 @@ class ManualToolbox(QDialog):
         done_btn.clicked.connect(self.on_done)
         btn_layout.addWidget(done_btn)
         
-        exit_btn = QPushButton("✕ Exit Manual")
+        exit_btn = QPushButton(" Exit Manual")
         exit_btn.setFixedHeight(40)
         exit_btn.setStyleSheet(f"""
             QPushButton {{
@@ -801,7 +801,7 @@ class ManualManager(QObject):
         
         QMessageBox.information(
             self.window,
-            "✓ Saved",
+            " Saved",
             f"Saved {box_count} manual box{'es' if box_count != 1 else ''}."
         )
         

@@ -335,9 +335,9 @@ class SmartLabelingApp:
             print("Loading model class names from metadata...")
             temp_model = YOLO(state.weights)
             state.coco_classes = list(temp_model.names.values())
-            print(f"✅ Loaded {len(state.coco_classes)} classes.")
+            print(f" Loaded {len(state.coco_classes)} classes.")
         except Exception as e:
-            print(f"⚠️ Warning: Could not load class names from {state.weights}: {e}")
+            print(f" Warning: Could not load class names from {state.weights}: {e}")
             # fallback to
             state.coco_classes = [
                 "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train",
@@ -525,7 +525,7 @@ class SmartLabelingApp:
         folder_name = folder_path.name
         if len(folder_name) > 25:
             folder_name = folder_name[:22] + "..."
-        self.window.top_bar.folder_btn.setText(f"📁 {folder_name}")
+        self.window.top_bar.folder_btn.setText(f" {folder_name}")
         
         # reset navigation
         if state.current_index >= len(state.image_files):

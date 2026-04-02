@@ -27,7 +27,7 @@ QPushButton#delete_btn:hover {
 
 BUTTON_ICONS = {
     "add": "+",
-    "done": "✓",
+    "done": "",
     "delete": "⌫"
 }
 

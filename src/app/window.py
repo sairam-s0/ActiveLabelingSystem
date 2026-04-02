@@ -59,7 +59,7 @@ class TopControlBar(QFrame):
         layout.setSpacing(15)
         
         # folder button
-        self.folder_btn = QPushButton("📁 Select Folder")
+        self.folder_btn = QPushButton(" Select Folder")
         self.folder_btn.setFixedSize(140, 40)
         self.folder_btn.setStyleSheet(f"""
             QPushButton {{
@@ -149,7 +149,7 @@ class TopControlBar(QFrame):
         layout.addWidget(self.progress_label)
         
         # gpu indicator
-        self.gpu_label = QLabel("🟢 GPU" if state.has_gpu else "⚪ CPU")
+        self.gpu_label = QLabel(" GPU" if state.has_gpu else " CPU")
         self.gpu_label.setStyleSheet(f"""
             color: {COLORS['success'] if state.has_gpu else COLORS['muted']};
             font-size: 11px;
@@ -160,7 +160,7 @@ class TopControlBar(QFrame):
         layout.addWidget(self.gpu_label)
         
         # start button
-        self.start_btn = QPushButton("▶ START")
+        self.start_btn = QPushButton(" START")
         self.start_btn.setFixedSize(100, 40)
         self.start_btn.setStyleSheet(f"""
             QPushButton {{
@@ -211,7 +211,7 @@ class LeftSidePanel(QFrame):
         layout.setSpacing(12)
         
         # active learn
-        layout.addWidget(self._create_section_header("🎯 Active Learning"))
+        layout.addWidget(self._create_section_header(" Active Learning"))
         
         al_panel = QFrame()
         al_panel.setStyleSheet(f"""
@@ -279,7 +279,7 @@ class LeftSidePanel(QFrame):
         layout.addWidget(al_panel)
         
         # training section
-        layout.addWidget(self._create_section_header("🔄 Training"))
+        layout.addWidget(self._create_section_header(" Training"))
         
         train_panel = QFrame()
         train_panel.setStyleSheet(f"""
@@ -319,7 +319,7 @@ class LeftSidePanel(QFrame):
         layout.addWidget(train_panel)
         
         # dataset version
-        layout.addWidget(self._create_section_header("📦 Versions"))
+        layout.addWidget(self._create_section_header(" Versions"))
         
         version_panel = QFrame()
         version_panel.setStyleSheet(f"""
@@ -367,7 +367,7 @@ class LeftSidePanel(QFrame):
         list_btn.clicked.connect(self.list_versions_clicked.emit)
         version_layout.addWidget(list_btn)
         
-        promote_btn = QPushButton("⭐ Promote Shadow")
+        promote_btn = QPushButton(" Promote Shadow")
         promote_btn.setFixedHeight(28)
         promote_btn.setStyleSheet(f"""
             QPushButton {{
@@ -390,7 +390,7 @@ class LeftSidePanel(QFrame):
         layout.addStretch()
         
         # stats button
-        stats_btn = QPushButton("📊 View Statistics")
+        stats_btn = QPushButton(" View Statistics")
         stats_btn.setFixedHeight(35)
         stats_btn.setStyleSheet(f"""
             QPushButton {{
@@ -444,11 +444,11 @@ class BottomActionBar(QFrame):
         layout.setSpacing(10)
         
         buttons = [
-            ("✓ Accept", "A", COLORS['success'], self.accept_clicked),
-            ("✗ Reject", "R", COLORS['danger'], self.reject_clicked),
+            (" Accept", "A", COLORS['success'], self.accept_clicked),
+            (" Reject", "R", COLORS['danger'], self.reject_clicked),
             ("→ Skip", "N", COLORS['muted'], self.skip_clicked),
-            ("✏ Manual", "M", COLORS['warning'], self.manual_clicked),
-            ("📋 Log", "", COLORS['accent'], self.log_clicked),
+            (" Manual", "M", COLORS['warning'], self.manual_clicked),
+            (" Log", "", COLORS['accent'], self.log_clicked),
         ]
         
         for text, shortcut, color, signal in buttons:
