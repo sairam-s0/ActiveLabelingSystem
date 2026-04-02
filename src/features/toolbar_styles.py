@@ -1,4 +1,4 @@
-# toolbar_styles.py
+# src/features/toolbar_styles.py
 
 TOOLBAR_STYLE = """
 QWidget {

@@ -7,11 +7,11 @@ from datetime import datetime
 class DataManager:
     def __init__(self, json_path: str, entropy_threshold: float = 0.6):
         self.path = Path(json_path)
-        self.entropy_threshold = entropy_threshold  # ✅ Configurable threshold
+        self.entropy_threshold = entropy_threshold  # configurable threshold
         self.lock = Lock()
         self.data = self._empty_data()
         self._load()
-        # Build class mapping on init in case file exists
+        # build class
         if self.data["images"]:
             self.build_class_mapping()
 
@@ -51,9 +51,8 @@ class DataManager:
 
     def save_labels(self, image_path: str, detections: list, 
                    entropy: float = 0.0, img_width: int = 0, img_height: int = 0):
-        """Save labels with full metadata including dimensions."""
         
-        # Validate required fields
+        # validate required
         if img_width <= 0 or img_height <= 0:
             print(f"[DataManager] WARNING: Invalid dimensions for {image_path}: {img_width}x{img_height}")
             return False
@@ -67,23 +66,22 @@ class DataManager:
             "status": "labeled"
         }
 
-        # 🔍 DEBUG LOGGING + USE CONFIGURABLE THRESHOLD
+        # debug logging
         will_queue = (entropy >= self.entropy_threshold) and (image_path not in self.data["training_queue"])
         print(f"[DataManager] Entropy check: {image_path} → entropy={entropy:.4f}, "
               f"threshold={self.entropy_threshold:.2f}, queued={will_queue}")
 
-        # Add to training queue if high entropy
+        # add to
         if entropy >= self.entropy_threshold and image_path not in self.data["training_queue"]:
             self.data["training_queue"].append(image_path)
             self.data["images"][image_path]["status"] = "queued"
 
-        # 🔒 CRITICAL: Rebuild class mapping after every label save
+        # critical rebuild
         self.build_class_mapping()
         self.save()
         return True
 
     def build_class_mapping(self):
-        """Scan all detections and build deterministic {'class_name': id} mapping."""
         class_names = set()
         for img_data in self.data["images"].values():
             for det in img_data.get("detections", []):
@@ -91,7 +89,7 @@ class DataManager:
                 if class_name:
                     class_names.add(class_name)
         
-        # Sort for deterministic ordering across sessions
+        # sort for
         sorted_classes = sorted(class_names)
         self.data["class_mapping"] = {
             name: idx for idx, name in enumerate(sorted_classes)
@@ -101,11 +99,9 @@ class DataManager:
             print(f"[DataManager] Class mapping updated: {self.data['class_mapping']}")
 
     def get_class_id(self, class_name: str) -> int:
-        """Return class ID; -1 if unknown."""
         return self.data["class_mapping"].get(class_name, -1)
 
     def get_class_counts(self) -> dict:
-        """Count total labeled instances per class across all images."""
         counts = {}
         for img_data in self.data["images"].values():
             for det in img_data.get("detections", []):
@@ -115,10 +111,6 @@ class DataManager:
         return counts
 
     def get_class_balance(self, target_classes: list = None, min_samples: int = 50) -> dict:
-        """
-        Identify which classes need more samples.
-        Returns: {'person': 5, 'seatbelt': 42} → "need 5 more 'person', 42 more 'seatbelt'"
-        """
         if target_classes is None:
             target_classes = list(self.data["class_mapping"].keys())
         
@@ -132,17 +124,6 @@ class DataManager:
         return needed
 
     def prepare_training_samples(self, image_paths: list) -> list[dict]:
-        """
-        Convert image paths into full sample dicts for shadow trainer.
-        
-        Returns list of dicts with:
-        - image_path: str
-        - detections: list with class_id instead of class name
-        - width: int (validated)
-        - height: int (validated)
-        - entropy: float
-        - timestamp: str (for replay buffer aging)
-        """
         samples = []
         skipped = 0
         
@@ -152,7 +133,7 @@ class DataManager:
                 skipped += 1
                 continue
             
-            # Validate dimensions
+            # validate dimensions
             width = img_data.get("width", 0)
             height = img_data.get("height", 0)
             if width <= 0 or height <= 0:
@@ -160,7 +141,7 @@ class DataManager:
                 skipped += 1
                 continue
             
-            # Convert class names to IDs
+            # convert class
             detections_with_ids = []
             for det in img_data.get("detections", []):
                 cls_name = det.get("class")
@@ -170,12 +151,12 @@ class DataManager:
                     print(f"[DataManager] Unknown class '{cls_name}', skipping detection")
                     continue
                 
-                # Create new detection dict with class_id
+                # create new
                 det_copy = {
                     "bbox": det.get("bbox"),
                     "confidence": det.get("confidence", 0),
                     "class_id": cls_id,
-                    "class_name": cls_name,  # Keep for reference
+                    "class_name": cls_name,  # keep for
                     "entropy": det.get("entropy", 0.0)
                 }
                 detections_with_ids.append(det_copy)
@@ -201,18 +182,6 @@ class DataManager:
         return samples
 
     def get_training_batch(self, count=30, new_only=True, return_full_samples=False) -> list:
-        """
-        Get training batch.
-        
-        Args:
-            count: Number of samples to return
-            new_only: If True, only return samples from training_queue
-            return_full_samples: If True, returns full sample dicts via prepare_training_samples()
-                                If False, returns just paths (legacy behavior)
-        
-        Returns:
-            List of paths or list of full sample dicts
-        """
         if new_only:
             paths = self.data["training_queue"][:count]
         else:
@@ -224,11 +193,9 @@ class DataManager:
             return paths
 
     def get_labels(self, image_path: str) -> dict:
-        """Get label data for specific image."""
         return self.data["images"].get(image_path)
 
     def get_all_labeled_images(self) -> list:
-        """Get all labeled images sorted by entropy (highest first)."""
         return sorted(
             self.data["images"].keys(),
             key=lambda k: self.data["images"][k].get("entropy", 0),
@@ -236,7 +203,6 @@ class DataManager:
         )
 
     def get_replay_samples(self, count=10, min_entropy=0.5) -> list:
-        """Get high-quality samples from trained set for replay buffer."""
         candidates = [
             path for path in self.data["trained_images"]
             if self.data["images"].get(path, {}).get("entropy", 0) > min_entropy
@@ -248,7 +214,6 @@ class DataManager:
         return candidates[:count]
 
     def mark_trained(self, image_paths: list):
-        """Mark images as trained and remove from training queue."""
         for path in image_paths:
             if path in self.data["training_queue"]:
                 self.data["training_queue"].remove(path)
@@ -260,7 +225,6 @@ class DataManager:
         print(f"[DataManager] Marked {len(image_paths)} images as trained")
 
     def get_stats(self) -> dict:
-        """Get current statistics."""
         total_entropy = sum(
             img.get("entropy", 0) for img in self.data["images"].values()
         )
@@ -278,7 +242,6 @@ class DataManager:
         }
 
     def export_simple_json(self) -> dict:
-        """Export labels to a simple JSON mapping."""
         exported = {}
         for img_path, img_data in self.data["images"].items():
             exported[img_path] = {
@@ -292,7 +255,6 @@ class DataManager:
         return exported
 
     def export_coco(self, image_root=None) -> dict:
-        """Export labels to COCO JSON format."""
         coco = {"images": [], "annotations": [], "categories": []}
 
         class_names = sorted(self.data["class_mapping"].keys())

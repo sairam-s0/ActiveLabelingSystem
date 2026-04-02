@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 class ReplayBuffer:
     def __init__(self, max_size=200, max_age_days=30):
-        self.buffer = []  # List of sample dicts
+        self.buffer = []  # list of
         self.max_size = max_size
         self.max_age_days = max_age_days
         self.class_counts = defaultdict(int)
@@ -13,7 +13,7 @@ class ReplayBuffer:
         return len(self.buffer)
 
     def add(self, samples):
-        # 🔧 STEP 1: Normalize input to list of dicts
+        # step 1
         if isinstance(samples, dict):
             samples = [samples]
         elif not isinstance(samples, list):
@@ -23,34 +23,34 @@ class ReplayBuffer:
         added_count = 0
         
         for s in samples:
-            # 🔧 STEP 2: Validate that s is a dict
+            # step 2
             if not isinstance(s, dict):
                 print(f"[ReplayBuffer] WARNING: Non-dict sample encountered (type: {type(s)}). Skipping.")
                 continue
 
-            # Ensure required field exists
+            # ensure required
             if 'image_path' not in s:
                 print("[ReplayBuffer] WARNING: Sample missing 'image_path'. Skipping.")
                 continue
 
-            # Deduplication check
+            # deduplication check
             if any(x.get('image_path') == s['image_path'] for x in self.buffer):
                 continue
 
-            # 🔧 STEP 3: Add timestamp if missing
+            # step 3
             if 'timestamp' not in s:
                 s['timestamp'] = datetime.now().isoformat()
 
             self.buffer.append(s)
             added_count += 1
 
-            # Update class counts
+            # update class
             for det in s.get('detections', []):
                 cls_name = det.get('class_name') or det.get('class')
                 if cls_name:
                     self.class_counts[cls_name] += 1
 
-        # Cleanup if over capacity
+        # cleanup if
         if len(self.buffer) > self.max_size:
             self._prune()
         
@@ -58,12 +58,8 @@ class ReplayBuffer:
             print(f"[ReplayBuffer] Added {added_count} samples, total: {len(self.buffer)}")
 
     def _prune(self):
-        """
-        Remove samples to maintain max_size.
-        Strategy: Remove lowest entropy samples first, but respect temporal decay.
-        """
         now = datetime.now()
-        # Add age and priority metadata
+        # add age
         for s in self.buffer:
             try:
                 ts = datetime.fromisoformat(s['timestamp'])
@@ -72,22 +68,22 @@ class ReplayBuffer:
             except (ValueError, KeyError):
                 s['_age_days'] = 0
 
-        # Apply temporal decay to entropy
+        # apply temporal
         for s in self.buffer:
             age = s['_age_days']
             decay = max(0.5, 1.0 - (age / (self.max_age_days * 2)))
             s['_priority'] = s.get('entropy', 0.0) * decay
 
-        # Sort by priority (keep highest)
+        # sort by
         self.buffer.sort(key=lambda x: x.get('_priority', 0.0))
 
-        # Remove lowest priority samples
+        # remove lowest
         remove_count = len(self.buffer) - self.max_size
         if remove_count > 0:
             removed = self.buffer[:remove_count]
             self.buffer = self.buffer[remove_count:]
 
-            # Update class counts
+            # update class
             for s in removed:
                 for det in s.get('detections', []):
                     cls_name = det.get('class_name') or det.get('class')
@@ -97,9 +93,6 @@ class ReplayBuffer:
             print(f"[ReplayBuffer] Pruned {remove_count} samples")
 
     def sample(self, count=10, strategy='entropy') -> list:
-        """
-        Sample from replay buffer using various strategies.
-        """
         if not self.buffer:
             return []
         
@@ -130,9 +123,6 @@ class ReplayBuffer:
         return self.sample(count, strategy='entropy')
 
     def _balanced_sample(self, count: int) -> list:
-        """
-        Class-balanced sampling to prevent catastrophic forgetting.
-        """
         if not self.buffer:
             return []
         
@@ -169,7 +159,7 @@ class ReplayBuffer:
             if len(selected) >= count:
                 break
         
-        # Fill remaining slots if needed
+        # fill remaining
         if len(selected) < count:
             remaining = [s for s in self.buffer if s['image_path'] not in selected_paths]
             needed = count - len(selected)
@@ -231,14 +221,14 @@ class ReplayBuffer:
                 if ts_str:
                     ts = datetime.fromisoformat(ts_str)
                 else:
-                    ts = datetime.now()  # treat missing as now
+                    ts = datetime.now()  # treat missing
                 if ts > cutoff:
                     filtered_buffer.append(s)
             except (ValueError, TypeError):
-                # Keep samples with invalid timestamps (conservative)
+                # keep samples
                 filtered_buffer.append(s)
         
-        # Rebuild class counts
+        # rebuild class
         self.buffer = filtered_buffer
         self.class_counts.clear()
         for s in self.buffer:

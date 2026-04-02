@@ -1,3 +1,4 @@
+# src/features/__init__.py
 from app import state
 from app import actions
 from app import window

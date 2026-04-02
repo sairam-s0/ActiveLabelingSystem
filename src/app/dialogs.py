@@ -1,7 +1,4 @@
-# app/dialogs.py
-"""
-Dialog windows for the application
-"""
+# src/app/dialogs.py
 
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QPushButton, 
                               QLabel, QListWidget, QLineEdit, QAbstractItemView,
@@ -9,7 +6,6 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QPushButton,
 from PyQt6.QtCore import Qt
 
 
-# Professional Color Palette (matching window.py)
 COLORS = {
     "bg": "#f7f6f2",          # cream background
     "panel": "#ebe9e1",       # light panel
@@ -26,7 +22,6 @@ COLORS = {
 
 
 class ClassSelectorDialog(QDialog):
-    """Dialog for selecting multiple detection classes."""
 
     def __init__(self, parent, all_classes, selected_classes):
         super().__init__(parent)
@@ -42,7 +37,7 @@ class ClassSelectorDialog(QDialog):
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(12)
         
-        # Header
+        # header
         header = QLabel("Select Detection Classes")
         header.setStyleSheet(f"""
             QLabel {{
@@ -57,7 +52,7 @@ class ClassSelectorDialog(QDialog):
         """)
         layout.addWidget(header)
         
-        # Instruction text
+        # instruction text
         instruction = QLabel("Select one or more classes for object detection:")
         instruction.setStyleSheet(f"""
             QLabel {{
@@ -68,7 +63,7 @@ class ClassSelectorDialog(QDialog):
         """)
         layout.addWidget(instruction)
 
-        # Class list
+        # class list
         self.listbox = QListWidget()
         self.listbox.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         self.listbox.setStyleSheet(f"""
@@ -100,7 +95,7 @@ class ClassSelectorDialog(QDialog):
                 self.listbox.item(i).setSelected(True)
         layout.addWidget(self.listbox, stretch=1)
 
-        # Add custom class section
+        # add custom
         add_label = QLabel("Add Custom Class:")
         add_label.setStyleSheet(f"""
             QLabel {{
@@ -156,7 +151,7 @@ class ClassSelectorDialog(QDialog):
         
         layout.addLayout(add_frame)
 
-        # Buttons
+        # buttons
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
         btn_layout.addStretch()
@@ -205,7 +200,6 @@ class ClassSelectorDialog(QDialog):
         self.setLayout(layout)
 
     def add_custom_class(self):
-        """Add a custom class to the list."""
         val = self.new_class_input.text().strip()
         if val and val not in self.all_classes:
             self.all_classes.append(val)
@@ -219,12 +213,10 @@ class ClassSelectorDialog(QDialog):
             self.new_class_input.clear()
 
     def get_selected(self):
-        """Return list of selected class names."""
         return [item.text() for item in self.listbox.selectedItems()]
 
 
 class LabelFormatDialog(QDialog):
-    """Dialog for selecting label output format."""
 
     def __init__(self, parent=None, current_format=None):
         super().__init__(parent)

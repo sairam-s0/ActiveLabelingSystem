@@ -1,4 +1,4 @@
-# toolbar_manager.py
+# src/features/toolbar_manager.py
 from PyQt6.QtCore import QTimer
 
 from features.toolbar_widget import FloatingToolbar

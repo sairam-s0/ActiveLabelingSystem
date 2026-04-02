@@ -1,4 +1,4 @@
-# shortcut_manager.py
+# src/features/shortcut_manager.py
 from PyQt6.QtCore import Qt
 from features.shortcut_config import SHORTCUTS
 

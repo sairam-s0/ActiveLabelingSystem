@@ -18,7 +18,6 @@ class DatasetVersioner:
         self.manifest = self._load_manifest()
     
     def _load_manifest(self) -> Dict:
-        """Load version manifest or create new one."""
         if self.manifest_file.exists():
             with open(self.manifest_file, 'r') as f:
                 return json.load(f)
@@ -39,22 +38,22 @@ class DatasetVersioner:
         description: str = "",
         parent_version: Optional[str] = None
     ) -> Dict:
-        # Generate version name if not provided
+        # generate version
         if not version_name:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             version_name = f"v_{timestamp}"
         
-        # Create version directory
+        # create version
         version_dir = self.versions_dir / version_name
         if version_dir.exists():
             raise ValueError(f"Version {version_name} already exists")
         
         version_dir.mkdir(parents=True)
         
-        # Get current dataset state
+        # get current
         all_images = data_manager.get_all_labeled_images()
         
-        # Copy images and create annotations
+        # copy images
         images_dir = version_dir / "images"
         labels_dir = version_dir / "labels"
         images_dir.mkdir()
@@ -69,16 +68,16 @@ class DatasetVersioner:
             if not src_path.exists():
                 continue
             
-            # Copy image
+            # copy image
             dst_img = images_dir / src_path.name
             shutil.copy2(src_path, dst_img)
             
-            # Get labels
+            # get labels
             img_data = data_manager.get_labels(img_path)
             if not img_data or not img_data.get('detections'):
                 continue
             
-            # Create YOLO-format annotation
+            # create yolo
             label_file = labels_dir / f"{src_path.stem}.txt"
             
             w = img_data.get('width', 0)
@@ -94,7 +93,7 @@ class DatasetVersioner:
                     
                     bbox = det['bbox']
                     
-                    # Convert to YOLO format
+                    # convert to
                     x_c = ((bbox[0] + bbox[2]) / 2) / w
                     y_c = ((bbox[1] + bbox[3]) / 2) / h
                     width = (bbox[2] - bbox[0]) / w
@@ -102,20 +101,20 @@ class DatasetVersioner:
                     
                     f.write(f"{class_id} {x_c:.6f} {y_c:.6f} {width:.6f} {height:.6f}\n")
                     
-                    # Track class distribution
+                    # track class
                     class_distribution[cls_name] = class_distribution.get(cls_name, 0) + 1
                     total_instances += 1
             
             copied_count += 1
         
-        # Create data.yaml
+        # create data
         class_mapping = data_manager.data.get('class_mapping', {})
         class_names = {v: k for k, v in class_mapping.items()}
         
         yaml_data = {
             'path': str(version_dir.absolute()),
             'train': 'images',
-            'val': 'images',  # Can split later
+            'val': 'images',  # can split
             'names': class_names
         }
         
@@ -123,10 +122,10 @@ class DatasetVersioner:
             import yaml
             yaml.dump(yaml_data, f)
         
-        # Calculate dataset hash for integrity
+        # calculate dataset
         dataset_hash = self._calculate_dataset_hash(images_dir, labels_dir)
         
-        # Create version metadata
+        # create version
         stats = data_manager.get_stats()
         
         metadata = {
@@ -150,11 +149,11 @@ class DatasetVersioner:
             }
         }
         
-        # Save metadata
+        # save metadata
         with open(version_dir / "metadata.json", 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        # Update manifest
+        # update manifest
         self.manifest['versions'][version_name] = metadata
         self.manifest['latest'] = version_name
         
@@ -170,21 +169,20 @@ class DatasetVersioner:
         return metadata
     
     def _calculate_dataset_hash(self, images_dir: Path, labels_dir: Path) -> str:
-        """Calculate hash of entire dataset for integrity checking."""
         hasher = hashlib.sha256()
         
-        # Hash all image files (sorted for determinism)
+        # hash all
         for img_file in sorted(images_dir.glob("*")):
             if img_file.is_file():
                 with open(img_file, 'rb') as f:
                     hasher.update(f.read())
         
-        # Hash all label files
+        # hash all
         for label_file in sorted(labels_dir.glob("*.txt")):
             with open(label_file, 'rb') as f:
                 hasher.update(f.read())
         
-        return hasher.hexdigest()[:16]  # Short hash
+        return hasher.hexdigest()[:16]  # short hash
     
     def export_version(self, version_name: str, export_path: Optional[str] = None) -> str:
         if version_name not in self.manifest['versions']:
@@ -195,7 +193,7 @@ class DatasetVersioner:
         if not export_path:
             export_path = self.versions_dir / f"{version_name}.zip"
         
-        # Create zip archive
+        # create zip
         with zipfile.ZipFile(export_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for file_path in version_dir.rglob("*"):
                 if file_path.is_file():
@@ -227,14 +225,14 @@ class DatasetVersioner:
             'class_distribution_changes': {}
         }
         
-        # Class changes
+        # class changes
         classes_a = set(stats_a['class_distribution'].keys())
         classes_b = set(stats_b['class_distribution'].keys())
         
         comparison['new_classes'] = list(classes_b - classes_a)
         comparison['removed_classes'] = list(classes_a - classes_b)
         
-        # Per-class instance changes
+        # per class
         for cls in classes_a | classes_b:
             count_a = stats_a['class_distribution'].get(cls, 0)
             count_b = stats_b['class_distribution'].get(cls, 0)
@@ -246,7 +244,6 @@ class DatasetVersioner:
         return comparison
     
     def get_lineage(self, version_name: str) -> List[str]:
-        """Get full lineage chain for a version."""
         lineage = []
         current = version_name
         
@@ -254,14 +251,13 @@ class DatasetVersioner:
             parents = self.manifest['lineage'][current]
             if not parents:
                 break
-            parent = parents[0]  # Take first parent
+            parent = parents[0]  # take first
             lineage.append(parent)
             current = parent
         
         return lineage
     
     def list_versions(self) -> List[Dict]:
-        """List all available versions."""
         versions = []
         for name, meta in self.manifest['versions'].items():
             versions.append({
@@ -274,7 +270,7 @@ class DatasetVersioner:
                 'hash': meta['hash']
             })
         
-        # Sort by creation time (newest first)
+        # sort by
         versions.sort(key=lambda v: v['created'], reverse=True)
         return versions
     

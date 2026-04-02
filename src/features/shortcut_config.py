@@ -1,4 +1,4 @@
-# shortcut_config.py
+# src/features/shortcut_config.py
 from PyQt6.QtCore import Qt
 
 SHORTCUTS = {

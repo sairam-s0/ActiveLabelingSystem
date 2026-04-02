@@ -6,10 +6,6 @@ import torch
 class EntropyCalculator:
     @staticmethod
     def normalized_entropy(probs: list[float]) -> float:
-        """
-        probs: list of class probabilities (softmax output)
-        returns: 0.0 (certain) → 1.0 (max uncertainty)
-        """
         if not probs:
             return 0.0
 
@@ -20,67 +16,56 @@ class EntropyCalculator:
 
     @staticmethod
     def from_yolo_output(box_output, num_classes: int = 80) -> float:
-        """
-        Calculate entropy from raw YOLO box output.
-        Handles both logits (needs softmax) and pre-computed probabilities.
-        
-        Args:
-            box_output: YOLO detection result (e.g., from model.predict())
-            num_classes: Total number of classes in model (default: 80 for COCO)
-        """
-        # Option 1: If model outputs direct probabilities (Classify head)
+        # option 1
         if hasattr(box_output, 'probs') and box_output.probs is not None:
             probs = box_output.probs.cpu().numpy()
             return EntropyCalculator.normalized_entropy(probs.tolist())
         
-        # Option 2: If model outputs logits (Detect head with extended output)
+        # option 2
         if hasattr(box_output, 'data') and isinstance(box_output.data, torch.Tensor):
             data = box_output.data
             if data.ndim == 2 and data.shape[1] > 6:
-                # Assume format: [x1, y1, x2, y2, conf, cls, ...logits]
+                # assume format
                 if data.shape[1] == 6 + num_classes:
-                    logits = data[:, 6:]  # Extract logits for highest-conf box (or per-box)
-                    # Use the first detection's logits for simplicity
+                    logits = data[:, 6:]  # extract logits
+                    # use the
                     if logits.shape[0] > 0:
                         probs = torch.softmax(logits[0], dim=-1).cpu().numpy()
                         return EntropyCalculator.normalized_entropy(probs.tolist())
 
         try:
-            # YOLOv8 Results object: box_output.boxes contains detection data
+            # yolov8 results
             if hasattr(box_output, 'boxes') and box_output.boxes is not None:
-                boxes = box_output.boxes  # Ultralytics YOLOv8 Boxes object
+                boxes = box_output.boxes  # ultralytics yolov8
                 if hasattr(boxes, 'conf') and len(boxes.conf) > 0:
-                    # Use the detection with the highest confidence (most representative)
+                    # use the
                     confs = boxes.conf.cpu().numpy()
                     classes = boxes.cls.cpu().numpy()
                     max_conf_idx = int(np.argmax(confs))
                     confidence = float(confs[max_conf_idx])
                     pred_class = int(classes[max_conf_idx])
 
-                    # Build synthetic probability distribution
+                    # build synthetic
                     if num_classes <= 1:
                         return 0.0
 
                     probs = np.full(num_classes, (1.0 - confidence) / (num_classes - 1))
                     probs[pred_class] = confidence
 
-                    # Clip to valid range and renormalize (tiny numerical errors possible)
+                    # clip to
                     probs = np.clip(probs, 1e-9, 1.0)
                     probs /= probs.sum()
 
                     return EntropyCalculator.normalized_entropy(probs.tolist())
         except (AttributeError, IndexError, ValueError, TypeError) as e:
-            # If any step fails, we truly have no data → return 0.0
+            # if any
             pass
 
-        # Absolute fallback: no detection info available
+        # absolute fallback
         return 0.0
 
     @staticmethod
     def image_entropy(detections: list[dict]) -> float:
-        """
-        Default aggregation: Max entropy across detections
-        """
         if not detections:
             return 0.0
         entropies = [d.get("entropy", 0.0) for d in detections]
@@ -88,9 +73,6 @@ class EntropyCalculator:
 
     @staticmethod
     def aggregate_entropy(detections: list[dict], method='max') -> float:
-        """
-        Calculate single entropy score for an entire image using different strategies.
-        """
         if not detections:
             return 0.0
         

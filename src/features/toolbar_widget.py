@@ -1,4 +1,4 @@
-# toolbar_widget.py
+# src/features/toolbar_widget.py
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 from PyQt6.QtCore import Qt
 

@@ -1,8 +1,4 @@
-# app/__init__.py
-"""
-Smart Labeling Application Package
-Handles UI, state management, and user interactions
-"""
+# src/app/__init__.py
 
 from . import state
 from . import actions

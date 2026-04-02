@@ -10,28 +10,17 @@ import torch
 
 @ray.remote
 class ShadowTrainer:
-    """
-    Ray actor for asynchronous model training with replay buffer integration.
-    """
     def __init__(self, base_model_path: str, class_mapping: dict, min_samples=30):
-        """
-        Initialize shadow trainer.
-        
-        Args:
-            base_model_path: Path to base model to fine-tune
-            class_mapping: Dict mapping class names to IDs, e.g., {'person': 0, 'car': 1}
-            min_samples: Minimum samples required before training
-        """
         print("[Shadow] Initializing Worker...")
         self.base_model_path = base_model_path
-        self.class_mapping = class_mapping  # {'person': 0, 'car': 1}
-        self.class_names = {v: k for k, v in class_mapping.items()}  # {0: 'person', 1: 'car'}
+        self.class_mapping = class_mapping  # person 0
+        self.class_names = {v: k for k, v in class_mapping.items()}  # 0 person
         self.min_samples = min_samples
         self.buffer = []
         self.is_training = False
         self.last_trained_at = None
         
-        # Training progress tracking
+        # training progress
         self.current_epoch = 0
         self.total_epochs = 50
         self.current_loss = 0.0
@@ -39,19 +28,9 @@ class ShadowTrainer:
         print(f"[Shadow] Initialized with {len(class_mapping)} classes: {list(class_mapping.keys())}")
 
     def add_labels(self, samples: list) -> dict:
-        """
-        Add samples to training buffer.
-        
-        Args:
-            samples: List of sample dicts with required keys:
-                - image_path
-                - detections (with class_id)
-                - width, height
-                - entropy
-        """
         valid_samples = 0
         for s in samples:
-            # Validate sample structure
+            # validate sample
             if not self._validate_sample(s):
                 print(f"[Shadow] Invalid sample: {s.get('image_path', 'unknown')}")
                 continue
@@ -69,7 +48,6 @@ class ShadowTrainer:
         }
 
     def _validate_sample(self, sample: dict) -> bool:
-        """Validate that sample has all required fields."""
         required = ['image_path', 'detections', 'width', 'height']
         
         for field in required:
@@ -77,12 +55,12 @@ class ShadowTrainer:
                 print(f"[Shadow] Missing field: {field}")
                 return False
         
-        # Validate dimensions
+        # validate dimensions
         if sample['width'] <= 0 or sample['height'] <= 0:
             print(f"[Shadow] Invalid dimensions: {sample['width']}x{sample['height']}")
             return False
         
-        # Validate detections have class_id
+        # validate detections
         for det in sample['detections']:
             if 'class_id' not in det:
                 print(f"[Shadow] Detection missing class_id")
@@ -91,15 +69,6 @@ class ShadowTrainer:
         return True
 
     def train(self, replay_samples: list = None) -> dict:
-        """
-        Train shadow model on buffered samples + replay samples.
-        
-        Args:
-            replay_samples: Optional list of samples from replay buffer
-            
-        Returns:
-            dict: Training result with success status and metrics
-        """
         if self.is_training:
             return {'success': False, 'error': 'Already training'}
         
@@ -112,11 +81,11 @@ class ShadowTrainer:
         self.is_training = True
         
         try:
-            # Combine new samples with replay samples
+            # combine new
             all_samples = self.buffer + (replay_samples or [])
             print(f"[Shadow] Training on {len(self.buffer)} new + {len(replay_samples or [])} replay samples")
             
-            # Validate all samples
+            # validate all
             valid_samples = [s for s in all_samples if self._validate_sample(s)]
             if len(valid_samples) < self.min_samples:
                 return {
@@ -124,29 +93,28 @@ class ShadowTrainer:
                     'error': f'Only {len(valid_samples)} valid samples after validation'
                 }
             
-            # Create temporary dataset
+            # create temporary
             tmp_dir = Path(tempfile.mkdtemp())
             dataset_yaml = self._create_yolo_dataset(valid_samples, tmp_dir)
             
             print(f"[Shadow] Starting training on {len(valid_samples)} samples...")
             print(f"[Shadow] Dataset created at: {tmp_dir}")
             
-            # Load model from base (or could use active model for continual learning)
+            # load model
             model = YOLO(self.base_model_path)
             
-            # 🔒 CRITICAL: Freeze backbone to prevent catastrophic forgetting
+            # critical freeze
             self._freeze_backbone(model, freeze_layers=10)
             
-            # Setup training callbacks
+            # setup training
             def on_train_epoch_end(trainer):
-                """Callback to track training progress."""
                 self.current_epoch = trainer.epoch
                 metrics = trainer.metrics
                 if hasattr(metrics, 'box_loss'):
                     self.current_loss = float(metrics.box_loss)
                 print(f"[Shadow] Epoch {self.current_epoch}/{self.total_epochs}, Loss: {self.current_loss:.4f}")
             
-            # Train with frozen backbone
+            # train with
             train_device = 0 if torch.cuda.is_available() else 'cpu'
             results = model.train(
                 data=str(dataset_yaml),
@@ -159,37 +127,37 @@ class ShadowTrainer:
                 project=str(tmp_dir),
                 name="shadow_run",
                 exist_ok=True,
-                # Callbacks
+                # callbacks
                 callbacks={'on_train_epoch_end': on_train_epoch_end}
             )
             
-            # Locate best weights
+            # locate best
             train_dir = tmp_dir / "shadow_run"
             best_weight = self._find_best_weights(train_dir)
             
             if not best_weight:
                 raise Exception("No valid weights generated during training")
             
-            # Move result to permanent location
+            # move result
             save_path = Path("models/shadow_candidate.pt")
             save_path.parent.mkdir(exist_ok=True)
             shutil.copy2(best_weight, save_path)
             
             print(f"[Shadow] Training complete! Model saved to: {save_path}")
             
-            # Get final metrics
+            # get final
             final_metrics = {
                 'map50': getattr(results, 'map50', 0.0),
                 'map': getattr(results, 'map', 0.0),
                 'final_loss': self.current_loss
             }
             
-            # Cleanup
+            # cleanup
             trained_paths = [s['image_path'] for s in self.buffer]
             self.buffer.clear()
             self.last_trained_at = datetime.now().isoformat()
             
-            # Clean up temp directory
+            # clean up
             try:
                 shutil.rmtree(tmp_dir)
             except:
@@ -222,13 +190,6 @@ class ShadowTrainer:
             self.current_loss = 0.0
 
     def _freeze_backbone(self, model, freeze_layers=10):
-        """
-        Freeze early layers to prevent catastrophic forgetting.
-        
-        Args:
-            model: YOLO model instance
-            freeze_layers: Number of layers to freeze (default: 10)
-        """
         try:
             frozen_count = 0
             for i, (name, param) in enumerate(model.model.named_parameters()):
@@ -242,24 +203,19 @@ class ShadowTrainer:
             print("[Shadow] Continuing without frozen layers (may cause catastrophic forgetting)")
 
     def _find_best_weights(self, train_dir: Path) -> Path:
-        """
-        Locate best model weights from training run.
-        
-        Priority: best.pt > last.pt > any .pt file
-        """
         weights_dir = train_dir / "weights"
         
-        # Check for best.pt (preferred)
+        # check for
         if (weights_dir / "best.pt").exists():
             print("[Shadow] Using best.pt")
             return weights_dir / "best.pt"
         
-        # Check for last.pt (fallback)
+        # check for
         if (weights_dir / "last.pt").exists():
             print("[Shadow] Using last.pt (best.pt not found)")
             return weights_dir / "last.pt"
         
-        # Find any .pt file
+        # find any
         weights = list(train_dir.glob("**/*.pt"))
         if weights:
             print(f"[Shadow] Using {weights[0].name} (no standard checkpoints found)")
@@ -268,23 +224,6 @@ class ShadowTrainer:
         return None
 
     def _create_yolo_dataset(self, samples: list, root_dir: Path) -> Path:
-        """
-        Generate YOLO-format dataset from samples.
-        
-        Structure:
-        root/
-          data.yaml
-          train/
-            images/
-            labels/
-        
-        Args:
-            samples: List of validated sample dicts
-            root_dir: Root directory for dataset
-            
-        Returns:
-            Path to data.yaml file
-        """
         images_dir = root_dir / "train" / "images"
         labels_dir = root_dir / "train" / "labels"
         images_dir.mkdir(parents=True, exist_ok=True)
@@ -300,54 +239,54 @@ class ShadowTrainer:
                 skipped_count += 1
                 continue
             
-            # Copy image
+            # copy image
             dst_img = images_dir / src_img.name
             shutil.copy2(src_img, dst_img)
             
-            # Create label file
+            # create label
             label_file = labels_dir / f"{src_img.stem}.txt"
             
-            # Get image dimensions
+            # get image
             w_img = s['width']
             h_img = s['height']
             
             with open(label_file, "w") as f:
                 for det in s['detections']:
-                    # Get class ID (should already be in detection)
+                    # get class
                     cls_id = det.get('class_id')
                     if cls_id is None:
                         print(f"[Shadow] Detection missing class_id, skipping")
                         continue
                     
-                    # Get bbox in xyxy format
+                    # get bbox
                     bbox = det['bbox']
                     
-                    # Convert xyxy to xywhn (YOLO format)
+                    # convert xyxy
                     x_c = ((bbox[0] + bbox[2]) / 2) / w_img
                     y_c = ((bbox[1] + bbox[3]) / 2) / h_img
                     w = (bbox[2] - bbox[0]) / w_img
                     h = (bbox[3] - bbox[1]) / h_img
                     
-                    # Clamp to [0, 1]
+                    # clamp to
                     x_c = max(0.0, min(1.0, x_c))
                     y_c = max(0.0, min(1.0, y_c))
                     w = max(0.0, min(1.0, w))
                     h = max(0.0, min(1.0, h))
                     
-                    # Write YOLO format: class x_center y_center width height
+                    # write yolo
                     f.write(f"{cls_id} {x_c:.6f} {y_c:.6f} {w:.6f} {h:.6f}\n")
             
             copied_count += 1
 
         print(f"[Shadow] Dataset created: {copied_count} images, {skipped_count} skipped")
         
-        # Create data.yaml
+        # create data
         yaml_path = root_dir / "data.yaml"
         yaml_data = {
             'path': str(root_dir.absolute()),
             'train': 'train/images',
-            'val': 'train/images',  # Using train as val for shadow training (fast iteration)
-            'names': self.class_names  # {0: 'person', 1: 'car', ...}
+            'val': 'train/images',  # using train
+            'names': self.class_names  # 0 person
         }
         
         with open(yaml_path, 'w') as f:
@@ -358,7 +297,6 @@ class ShadowTrainer:
         return yaml_path
 
     def get_status(self) -> dict:
-        """Get current training status."""
         return {
             'is_training': self.is_training,
             'buffer_size': len(self.buffer),
@@ -370,7 +308,6 @@ class ShadowTrainer:
         }
 
     def get_training_progress(self) -> dict:
-        """Get detailed training progress (for UI updates)."""
         if not self.is_training:
             return {
                 'training': False,
@@ -388,11 +325,9 @@ class ShadowTrainer:
         }
 
     def clear_buffer(self):
-        """Clear training buffer (for manual reset)."""
         size = len(self.buffer)
         self.buffer.clear()
         return {'cleared': size}
 
     def ping(self) -> str:
-        """Health check for Ray actor."""
         return 'pong'

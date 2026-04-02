@@ -1,3 +1,5 @@
+# src/features/manual.py
+
 import hashlib
 from datetime import datetime
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
@@ -12,7 +14,7 @@ from features.shortcut_manager import ShortcutManager
 from features.toolbar_manager import ToolbarManager
 
 
-# Professional Color Palette (matching window.py)
+# src/features/manual.py
 COLORS = {
     "bg": "#f7f6f2",          # cream background
     "panel": "#ebe9e1",       # light panel
@@ -29,17 +31,15 @@ COLORS = {
 
 
 def default_color_for_name(name: str) -> str:
-    """Deterministic color for a class name (simple hash -> hex)."""
     h = int(hashlib.md5(name.encode('utf-8')).hexdigest()[:6], 16)
     return f"#{h:06x}"
 
 
 def safe_class_name(name: str) -> str:
-    """Clean class name by removing extra spaces."""
     return ' '.join(name.strip().split())
 
 
-# DrawingOverlay class
+# drawingoverlay class
 class DrawingOverlay(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -48,10 +48,9 @@ class DrawingOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.rect = None
         self.color = QColor("red")
-        self.completed_boxes = []  # Store [QRect, class_name, color] for display
+        self.completed_boxes = []  # store qrect
 
     def set_completed_boxes(self, boxes):
-        """Update list of completed boxes to display."""
         self.completed_boxes = boxes
         self.update()
 
@@ -59,13 +58,13 @@ class DrawingOverlay(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # Draw completed boxes
+        # draw completed
         for box_rect, cls_name, color in self.completed_boxes:
             pen = QPen(QColor(color), 3)
             painter.setPen(pen)
             painter.drawRect(box_rect)
             
-            # Draw label background
+            # draw label
             font = painter.font()
             font.setPointSize(9)
             font.setBold(True)
@@ -83,12 +82,12 @@ class DrawingOverlay(QWidget):
                 text_height + 4
             )
             
-            # Draw label background with rounded corners effect
+            # draw label
             painter.fillRect(label_rect, QColor(color))
             painter.setPen(QColor("white"))
             painter.drawText(label_rect, Qt.AlignmentFlag.AlignCenter, label_text)
         
-        # Draw current drawing rectangle
+        # draw current
         if self.rect:
             pen = QPen(QColor(COLORS['warning']), 3, Qt.PenStyle.DashLine)
             painter.setPen(pen)
@@ -96,7 +95,6 @@ class DrawingOverlay(QWidget):
 
 
 class ManualToolbox(QDialog):
-    """Floating toolbox for manual labeling with class selection."""
     
     def __init__(self, parent, classes, current_class, on_done, on_exit):
         super().__init__(parent)
@@ -114,7 +112,7 @@ class ManualToolbox(QDialog):
         layout.setSpacing(12)
         layout.setContentsMargins(12, 12, 12, 12)
         
-        # Header
+        # header
         header = QLabel("📍 Manual Labeling")
         header.setStyleSheet(f"""
             QLabel {{
@@ -129,7 +127,7 @@ class ManualToolbox(QDialog):
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(header)
         
-        # Instructions
+        # instructions
         info = QLabel(
             "1. Select a class below\n"
             "2. Click & drag on image\n"
@@ -149,7 +147,7 @@ class ManualToolbox(QDialog):
         info.setWordWrap(True)
         layout.addWidget(info)
         
-        # Class count label
+        # class count
         self.class_count_label = QLabel(f"Classes: {len(classes)}")
         self.class_count_label.setStyleSheet(f"""
             QLabel {{
@@ -160,7 +158,7 @@ class ManualToolbox(QDialog):
         """)
         layout.addWidget(self.class_count_label)
         
-        # Scrollable class list
+        # scrollable class
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet(f"""
@@ -197,7 +195,7 @@ class ManualToolbox(QDialog):
             frame_layout.setContentsMargins(8, 6, 8, 6)
             frame_layout.setSpacing(10)
             
-            # Color indicator
+            # color indicator
             color_label = QLabel("  ")
             color_label.setStyleSheet(f"""
                 QLabel {{
@@ -209,7 +207,7 @@ class ManualToolbox(QDialog):
             color_label.setFixedSize(18, 18)
             frame_layout.addWidget(color_label)
             
-            # Radio button with class name
+            # radio button
             radio = QRadioButton(cls)
             radio.setStyleSheet(f"""
                 QRadioButton {{
@@ -246,7 +244,7 @@ class ManualToolbox(QDialog):
         scroll.setWidget(scroll_widget)
         layout.addWidget(scroll)
         
-        # Box count display
+        # box count
         self.box_count_label = QLabel("Boxes drawn: 0")
         self.box_count_label.setStyleSheet(f"""
             QLabel {{
@@ -260,7 +258,7 @@ class ManualToolbox(QDialog):
         """)
         layout.addWidget(self.box_count_label)
         
-        # Action buttons
+        # action buttons
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(8)
         
@@ -304,17 +302,14 @@ class ManualToolbox(QDialog):
         self.setLayout(layout)
     
     def get_selected_class(self):
-        """Get currently selected class name."""
         checked = self.button_group.checkedButton()
         return checked.text() if checked else None
     
     def update_box_count(self, count):
-        """Update displayed box count."""
         self.box_count_label.setText(f"Boxes drawn: {count}")
 
 
 class ManualManager(QObject):
-    """Manages manual labeling mode with mouse-drawn bounding boxes."""
     
     def __init__(self, host, window, state):
         super().__init__(window)
@@ -322,26 +317,25 @@ class ManualManager(QObject):
         self.window = window
         self.state = state
         
-        # Manual mode state
+        # manual mode
         self._active = False
         self._overlay = None
         self._toolbox = None
         self._start_point = None
         self._current_manual_class = None
-        self._manual_boxes = []  # List of [x1, y1, x2, y2, class_name]
-        self._box_history = []  # List of box snapshots for undo
-        self._active_image_path = None  # Track which image we're drawing on
-        self._event_filter_disabled = False  # Flag to disable event filter
+        self._manual_boxes = []  # list of
+        self._box_history = []  # list of
+        self._active_image_path = None  # track which
+        self._event_filter_disabled = False  # flag to
         self.shortcuts = None
         self.toolbar = None
         
     def start_manual_labeling(self):
-        """Start manual labeling mode."""
         if self._active:
             print("[Manual] Already in manual mode")
             return
         
-        # Require class selection first
+        # require class
         if not self.state.selected_classes:
             QMessageBox.warning(
                 self.window,
@@ -350,7 +344,7 @@ class ManualManager(QObject):
             )
             return
         
-        # Require image to be loaded
+        # require image
         if not self.state.current_image:
             QMessageBox.warning(
                 self.window,
@@ -360,7 +354,7 @@ class ManualManager(QObject):
             return
         
         self._active = True
-        self._event_filter_disabled = False  # Re-enable event filter
+        self._event_filter_disabled = False  # re enable
         self._manual_boxes = []
         self._box_history = []
         self._start_point = None
@@ -368,15 +362,15 @@ class ManualManager(QObject):
         self._current_manual_class = self.state.selected_classes[0]
 
         try:
-            # Create overlay for drawing
+            # create overlay
             self._overlay = DrawingOverlay(self.window.canvas_label)
             self._overlay.setGeometry(self.window.canvas_label.rect())
             self._overlay.show()
 
-            # Install event filter for mouse drawing
+            # install event
             self.window.canvas_label.installEventFilter(self)
 
-            # Create floating toolbox
+            # create floating
             self._toolbox = ManualToolbox(
                 parent=self.window,
                 classes=self.state.selected_classes,
@@ -400,11 +394,10 @@ class ManualManager(QObject):
         print(f"[Manual] Starting manual mode with classes: {self.state.selected_classes}")
     
     def exit_manual_mode(self):
-        """Exit manual mode and cleanup."""
         if not self._active:
             return
         
-        # Confirm exit if boxes are drawn
+        # confirm exit
         if self._manual_boxes:
             reply = QMessageBox.question(
                 self.window,
@@ -419,30 +412,29 @@ class ManualManager(QObject):
         self._cleanup()
     
     def on_image_changed(self):
-        """Handle image navigation during manual mode."""
         if not self._active:
             return
         
-        # Update active image path
+        # update active
         if self.state.current_image_path:
             self._active_image_path = str(self.state.current_image_path)
         
-        # Reset box state for new image
+        # reset box
         self._manual_boxes = []
         self._box_history = []
         self._start_point = None
         
-        # Update overlay geometry
+        # update overlay
         if self._overlay:
             try:
                 self._overlay.setGeometry(self.window.canvas_label.rect())
                 self._overlay.set_completed_boxes([])
                 self._overlay.update()
             except RuntimeError:
-                # Overlay was deleted
+                # overlay was
                 self._overlay = None
         
-        # Update toolbox box count
+        # update toolbox
         if self._toolbox:
             try:
                 self._toolbox.update_box_count(0)
@@ -464,20 +456,17 @@ class ManualManager(QObject):
                 pass
     
     def _bind_mouse(self):
-        """Install event filter for mouse events."""
         self.window.canvas_label.installEventFilter(self)
     
     def _unbind_mouse(self):
-        """Remove event filter for mouse events."""
-        self._event_filter_disabled = True  # Disable event filter immediately
+        self._event_filter_disabled = True  # disable event
         try:
             self.window.canvas_label.removeEventFilter(self)
         except RuntimeError:
-            pass  # Canvas was already deleted
+            pass  # canvas was
     
     def eventFilter(self, obj, event):
-        """Handle mouse events for drawing boxes."""
-        # Early return if event filter is disabled or not active
+        # early return
         if (self._event_filter_disabled or 
             not self._active or 
             obj != self.window.canvas_label or 
@@ -499,14 +488,12 @@ class ManualManager(QObject):
         return False
 
     def _safe_scale_factor(self):
-        """Return a valid positive float scale factor."""
         scale = getattr(self.host, "scale_factor", None)
         if not isinstance(scale, (int, float)) or scale <= 0:
             return 1.0
         return float(scale)
     
     def _get_image_coords(self, event_pos):
-        """Convert canvas coordinates to image coordinates."""
         try:
             pixmap = self.window.canvas_label.pixmap()
         except RuntimeError:
@@ -525,15 +512,14 @@ class ManualManager(QObject):
         
         scale = self._safe_scale_factor()
         
-        # Convert to image coordinates
+        # convert to
         img_x = (event_pos.x() - offset_x) / scale
         img_y = (event_pos.y() - offset_y) / scale
         
         return img_x, img_y
     
     def _on_mouse_press(self, event):
-        """Handle mouse press - start drawing."""
-        # Get current class from toolbox
+        # get current
         if self._toolbox:
             try:
                 selected = self._toolbox.get_selected_class()
@@ -549,11 +535,10 @@ class ManualManager(QObject):
         self._start_point = (img_x, img_y)
     
     def _on_mouse_move(self, event):
-        """Handle mouse move - update drawing preview."""
         if not self._start_point or not self._overlay:
             return
         
-        # Safety check
+        # safety check
         try:
             if not self._overlay.isVisible():
                 return
@@ -567,7 +552,7 @@ class ManualManager(QObject):
         
         x1, y1 = self._start_point
         
-        # Convert to display coordinates for preview
+        # convert to
         try:
             pixmap = self.window.canvas_label.pixmap()
         except RuntimeError:
@@ -605,7 +590,6 @@ class ManualManager(QObject):
             self._overlay = None
     
     def _on_mouse_release(self, event):
-        """Handle mouse release - complete box."""
         if not self._start_point:
             return
         
@@ -616,11 +600,11 @@ class ManualManager(QObject):
         x1, y1 = self._start_point
         x2, y2 = img_x, img_y
         
-        # Normalize coordinates
+        # normalize coordinates
         x1, x2 = min(x1, x2), max(x1, x2)
         y1, y2 = min(y1, y2), max(y1, y2)
         
-        # Clamp to image bounds to avoid invalid boxes
+        # clamp to
         try:
             img_w, img_h = self.state.current_image.size
             x1 = max(0.0, min(float(img_w), x1))
@@ -630,7 +614,7 @@ class ManualManager(QObject):
         except Exception:
             pass
         
-        # Check if box is valid (minimum 5x5 pixels in original image space)
+        # check if
         if abs(x2 - x1) > 5 and abs(y2 - y1) > 5:
             cls_name = safe_class_name(self._current_manual_class or "manual")
             box = [x1, y1, x2, y2, cls_name]
@@ -638,15 +622,15 @@ class ManualManager(QObject):
             self._box_history.append(list(box))
             print(f"[Manual] Box added: {cls_name} at [{x1:.1f}, {y1:.1f}, {x2:.1f}, {y2:.1f}]")
             
-            # Update toolbox count
+            # update toolbox
             if self._toolbox:
                 try:
                     self._toolbox.update_box_count(len(self._manual_boxes))
                 except RuntimeError:
-                    # Toolbox was deleted
+                    # toolbox was
                     self._toolbox = None
             
-            # Show toolbar near bottom-right of box (canvas coordinates)
+            # show toolbar
             if self.toolbar:
                 try:
                     pixmap = self.window.canvas_label.pixmap()
@@ -664,7 +648,7 @@ class ManualManager(QObject):
                     disp_y = y2 * scale + offset_y
                     self.toolbar.show_near(disp_x, disp_y)
         
-        # Clear current drawing
+        # clear current
         self._start_point = None
         if self._overlay:
             try:
@@ -673,29 +657,28 @@ class ManualManager(QObject):
                 self._overlay = None
                 return
         
-        # Redraw with saved boxes
+        # redraw with
         self._redraw_with_boxes()
     
     def _redraw_with_boxes(self):
-        """Redraw image with all manual boxes overlaid."""
         if not self.state.current_image or not self._overlay:
             return
         
-        # Safety check: Ensure overlay is still valid
+        # safety check
         try:
             if not self._overlay.isVisible():
                 return
         except RuntimeError:
-            # Overlay was deleted
+            # overlay was
             self._overlay = None
             return
         
-        # Safety check: Ensure we're drawing boxes for the current image
+        # safety check
         current_image_path = str(self.state.current_image_path)
         if self._active_image_path != current_image_path:
             return
         
-        # Get canvas dimensions and pixmap
+        # get canvas
         try:
             pixmap = self.window.canvas_label.pixmap()
         except RuntimeError:
@@ -714,12 +697,12 @@ class ManualManager(QObject):
         
         scale = self._safe_scale_factor()
         
-        # Convert manual boxes to display rectangles
+        # convert manual
         overlay_boxes = []
         for box in self._manual_boxes:
             x1, y1, x2, y2, cls_name = box
             
-            # Convert from image coords to display coords
+            # convert from
             display_x1 = x1 * scale + offset_x
             display_y1 = y1 * scale + offset_y
             display_x2 = x2 * scale + offset_x
@@ -735,16 +718,15 @@ class ManualManager(QObject):
             color = default_color_for_name(cls_name)
             overlay_boxes.append((rect, cls_name, color))
         
-        # Update overlay with boxes safely
+        # update overlay
         try:
             self._overlay.set_completed_boxes(overlay_boxes)
             self._overlay.update()
         except RuntimeError:
-            # Overlay was deleted during operation
+            # overlay was
             self._overlay = None
     
     def finish_manual_labeling(self):
-        """Save manual boxes and advance to next image while keeping manual mode active."""
         if self.toolbar:
             self.toolbar.hide()
         self._box_history = []
@@ -756,7 +738,7 @@ class ManualManager(QObject):
             self.on_image_changed()
             return
         
-        # Save to host.labels
+        # save to
         img_path = str(self.state.current_image_path)
         entry = self.host.labels.get(img_path, {})
         dets = entry.get('detections', [])
@@ -776,7 +758,7 @@ class ManualManager(QObject):
         
         entry['detections'] = dets
         
-        # Store metadata
+        # store metadata
         try:
             w, h = self.state.current_image.size
             entry['image_width'] = w
@@ -787,7 +769,7 @@ class ManualManager(QObject):
         entry['timestamp'] = datetime.now().isoformat()
         self.host.labels[img_path] = entry
         
-        # Persist through DataManager so manual labels affect training + class mapping
+        # persist through
         img_w = entry.get('image_width', 0)
         img_h = entry.get('image_height', 0)
         image_entropy = 0.65
@@ -801,14 +783,14 @@ class ManualManager(QObject):
             )
         
         self.host.on_label_saved(img_path, dets)
-        # Update training counters
+        # update training
         for box in self._manual_boxes:
             cls_name = safe_class_name(box[4])
             if cls_name not in self.host.custom_classes:
                 self.host.custom_classes.append(cls_name)
             self.host.class_samples[cls_name] = self.host.class_samples.get(cls_name, 0) + 1
         
-        # Save and update
+        # save and
         try:
             self.host.save_autosave()
             self.host.update_stats()
@@ -824,7 +806,7 @@ class ManualManager(QObject):
         )
         
         
-        # Clear and advance to next image, keeping manual mode alive
+        # clear and
         self._manual_boxes = []
         self._start_point = None
         self._active_image_path = None
@@ -834,7 +816,6 @@ class ManualManager(QObject):
         self.on_image_changed()
     
     def _cleanup(self):
-        """Complete cleanup when manual mode is explicitly stopped."""
         print("[Manual] Cleanup - exiting manual mode completely")
         if self.shortcuts:
             self.shortcuts.disable()
@@ -845,21 +826,21 @@ class ManualManager(QObject):
         self._box_history = []
         self._active = False
         
-        # Hard reset manual state
+        # hard reset
         self._manual_boxes = []
         self._start_point = None
         self._active_image_path = None
         
-        # UNBIND EARLY to stop event filter spam
+        # unbind early
         self._unbind_mouse()
         
-        # Defer widget cleanup to main thread post-unbind
+        # defer widget
         def safe_cleanup_widgets():
             if self._overlay:
                 try:
-                    self._overlay.hide()  # Hide first
+                    self._overlay.hide()  # hide first
                     self._overlay.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
-                    self._overlay.close()  # Let Qt handle deletion naturally
+                    self._overlay.close()  # let qt
                 except RuntimeError:
                     pass
                 finally:
@@ -874,7 +855,7 @@ class ManualManager(QObject):
                 finally:
                     self._toolbox = None
         
-        # Queue on main thread (safer than direct deleteLater during shutdown)
+        # queue on
         QTimer.singleShot(0, safe_cleanup_widgets)
 
     def _delete_last_box(self):
@@ -911,14 +892,12 @@ class ManualManager(QObject):
             self.toolbar.hide()
     
     def get_persist_data(self):
-        """Return class list and samples for autosave."""
         return {
             'custom_classes': list(self.host.custom_classes),
             'class_samples': dict(self.host.class_samples)
         }
     
     def load_persist_data(self, data):
-        """Load custom classes and samples from autosave."""
         if not data:
             return
         

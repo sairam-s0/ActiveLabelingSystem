@@ -1,7 +1,4 @@
-# app/actions.py
-"""
-User action handlers for labeling workflow
-"""
+# src/app/actions.py
 
 import json
 import tempfile
@@ -13,9 +10,8 @@ from app import state
 
 
 def accept(app):
-    """Accept current detections and save label."""
     if state.current_detections:
-        # Save with full metadata using data_manager
+        # save with
         if hasattr(app, 'data_manager'):
             img_path = str(state.current_image_path)
             img_w, img_h = state._current_img_size
@@ -28,10 +24,10 @@ def accept(app):
                 img_height=img_h
             )
             
-            # Check if we should trigger training
+            # check if
             app.orchestrator.check_training_trigger()
         else:
-            # Fallback to direct save
+            # fallback to
             save_label(app, state.current_detections, auto=False)
     
     state.current_index += 1
@@ -39,7 +35,6 @@ def accept(app):
 
 
 def reject(app):
-    """Reject current image without saving."""
     try:
         app.save_autosave()
     except Exception:
@@ -49,7 +44,6 @@ def reject(app):
 
 
 def skip(app):
-    """Skip current image without labeling."""
     try:
         app.save_autosave()
     except Exception:
@@ -59,7 +53,6 @@ def skip(app):
 
 
 def save_label(app, detections, auto=False):
-    """Save label data for current image."""
     img_path = str(state.image_files[state.current_index])
     img_w, img_h = state._current_img_size
     
@@ -87,7 +80,6 @@ def save_label(app, detections, auto=False):
 
 
 def show_log(app):
-    """Display auto-accepted images log."""
     if not state.auto_accepted_log:
         QMessageBox.information(app, "Log", "No auto-accepted images yet")
         return
@@ -97,7 +89,6 @@ def show_log(app):
 
 
 def export_json(app):
-    """Export labels to JSON format."""
     if not state.labels:
         QMessageBox.warning(app, "No Data", "No labels to export")
         return
@@ -110,7 +101,6 @@ def export_json(app):
 
 
 def export_coco(app):
-    """Export labels to COCO format."""
     if not state.labels:
         QMessageBox.warning(app, "No Data", "No labels to export")
         return
@@ -123,7 +113,7 @@ def export_coco(app):
     class_to_id = {}
     cat_id = 1
     
-    # Build categories
+    # build categories
     for img_path, ld in state.labels.items():
         for det in ld.get('detections', []):
             cls_name = det.get('class', 'unknown')
@@ -136,7 +126,7 @@ def export_coco(app):
                 })
                 cat_id += 1
     
-    # Build images and annotations
+    # build images
     img_id = 1
     ann_id = 1
     for img_path, ld in state.labels.items():
@@ -176,12 +166,11 @@ def export_coco(app):
 
 
 def promote_shadow_model(app):
-    """Promote shadow model to active."""
     if not hasattr(app, 'orchestrator'):
         QMessageBox.warning(app, "Error", "Training system not initialized")
         return
     
-    # Confirm promotion
+    # confirm promotion
     reply = QMessageBox.question(
         app,
         "Promote Shadow Model",
@@ -193,7 +182,7 @@ def promote_shadow_model(app):
     if reply != QMessageBox.StandardButton.Yes:
         return
     
-    # Attempt promotion
+    # attempt promotion
     result = app.orchestrator.promote_shadow_model(validate=True)
     
     if result['success']:
@@ -206,7 +195,7 @@ def promote_shadow_model(app):
             f"Restart the app to use the new model."
         )
     elif result.get('requires_confirmation'):
-        # Validation failed - ask user
+        # validation failed
         reply = QMessageBox.question(
             app,
             "Validation Warning",

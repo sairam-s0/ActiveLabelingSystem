@@ -1,7 +1,4 @@
-# app/window.py - Main Window with Professional Stable UI
-"""
-Main application window with enterprise-grade stable layout
-"""
+# src/app/window.py
 from PIL import Image
 
 from PyQt6.QtWidgets import (
@@ -22,7 +19,7 @@ from app import state, utils
 from app.dialogs import ClassSelectorDialog, LabelFormatDialog
 
 
-# Professional Color Palette
+# professional color
 COLORS = {
     "bg": "#f7f6f2",          # cream background
     "panel": "#ebe9e1",       # light panel
@@ -39,7 +36,6 @@ COLORS = {
 
 
 class TopControlBar(QFrame):
-    """Fixed-height top control bar"""
     
     folder_clicked = pyqtSignal()
     class_clicked = pyqtSignal()
@@ -62,7 +58,7 @@ class TopControlBar(QFrame):
         layout.setContentsMargins(15, 10, 15, 10)
         layout.setSpacing(15)
         
-        # Folder button
+        # folder button
         self.folder_btn = QPushButton("📁 Select Folder")
         self.folder_btn.setFixedSize(140, 40)
         self.folder_btn.setStyleSheet(f"""
@@ -81,10 +77,10 @@ class TopControlBar(QFrame):
         self.folder_btn.clicked.connect(self.folder_clicked.emit)
         layout.addWidget(self.folder_btn)
         
-        # Separator
+        # separator
         layout.addWidget(self._create_separator())
         
-        # Class selector
+        # class selector
         class_label = QLabel("Classes:")
         class_label.setStyleSheet(f"color: {COLORS['text']}; font-size: 12px; font-weight: bold;")
         layout.addWidget(class_label)
@@ -111,10 +107,10 @@ class TopControlBar(QFrame):
         self.class_label.setMinimumWidth(150)
         layout.addWidget(self.class_label)
         
-        # Separator
+        # separator
         layout.addWidget(self._create_separator())
         
-        # Threshold
+        # threshold
         thresh_label = QLabel("Confidence:")
         thresh_label.setStyleSheet(f"color: {COLORS['text']}; font-size: 12px; font-weight: bold;")
         layout.addWidget(thresh_label)
@@ -147,12 +143,12 @@ class TopControlBar(QFrame):
         
         layout.addStretch()
         
-        # Progress
+        # progress
         self.progress_label = QLabel("Ready")
         self.progress_label.setStyleSheet(f"color: {COLORS['text']}; font-size: 12px; font-weight: bold;")
         layout.addWidget(self.progress_label)
         
-        # GPU indicator
+        # gpu indicator
         self.gpu_label = QLabel("🟢 GPU" if state.has_gpu else "⚪ CPU")
         self.gpu_label.setStyleSheet(f"""
             color: {COLORS['success'] if state.has_gpu else COLORS['muted']};
@@ -163,7 +159,7 @@ class TopControlBar(QFrame):
         """)
         layout.addWidget(self.gpu_label)
         
-        # Start button
+        # start button
         self.start_btn = QPushButton("▶ START")
         self.start_btn.setFixedSize(100, 40)
         self.start_btn.setStyleSheet(f"""
@@ -191,7 +187,6 @@ class TopControlBar(QFrame):
 
 
 class LeftSidePanel(QFrame):
-    """Fixed-width left panel with stats and controls"""
     
     stats_clicked = pyqtSignal()
     force_retrain_clicked = pyqtSignal()
@@ -215,7 +210,7 @@ class LeftSidePanel(QFrame):
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(12)
         
-        # Active Learning Section
+        # active learn
         layout.addWidget(self._create_section_header("🎯 Active Learning"))
         
         al_panel = QFrame()
@@ -229,7 +224,7 @@ class LeftSidePanel(QFrame):
         al_layout = QVBoxLayout(al_panel)
         al_layout.setSpacing(8)
         
-        # Strategy selector
+        # strategy selector
         strategy_label = QLabel("Selection Strategy:")
         strategy_label.setStyleSheet(f"color: {COLORS['text']}; font-size: 11px; font-weight: bold;")
         al_layout.addWidget(strategy_label)
@@ -271,19 +266,19 @@ class LeftSidePanel(QFrame):
 
         al_layout.addWidget(self.strategy_combo)
         
-        # Entropy display
+        # entropy display
         self.entropy_label = QLabel("Entropy: --")
         self.entropy_label.setStyleSheet(f"color: {COLORS['warning']}; font-size: 12px; font-weight: bold;")
         al_layout.addWidget(self.entropy_label)
         
-        # Queue status
+        # queue status
         self.queue_label = QLabel("Queue: 0/30")
         self.queue_label.setStyleSheet(f"color: {COLORS['muted']}; font-size: 11px;")
         al_layout.addWidget(self.queue_label)
         
         layout.addWidget(al_panel)
         
-        # Training Section
+        # training section
         layout.addWidget(self._create_section_header("🔄 Training"))
         
         train_panel = QFrame()
@@ -302,7 +297,7 @@ class LeftSidePanel(QFrame):
         self.training_status_label.setWordWrap(True)
         train_layout.addWidget(self.training_status_label)
         
-        # Force retrain button
+        # force retrain
         force_btn = QPushButton("Force Retrain")
         force_btn.setFixedHeight(32)
         force_btn.setStyleSheet(f"""
@@ -323,7 +318,7 @@ class LeftSidePanel(QFrame):
         
         layout.addWidget(train_panel)
         
-        # Dataset Version Section
+        # dataset version
         layout.addWidget(self._create_section_header("📦 Versions"))
         
         version_panel = QFrame()
@@ -337,7 +332,7 @@ class LeftSidePanel(QFrame):
         version_layout = QVBoxLayout(version_panel)
         version_layout.setSpacing(6)
         
-        # Version buttons
+        # version buttons
         create_btn = QPushButton("Create Version")
         create_btn.setFixedHeight(28)
         create_btn.setStyleSheet(f"""
@@ -394,7 +389,7 @@ class LeftSidePanel(QFrame):
         
         layout.addStretch()
         
-        # Stats button at bottom
+        # stats button
         stats_btn = QPushButton("📊 View Statistics")
         stats_btn.setFixedHeight(35)
         stats_btn.setStyleSheet(f"""
@@ -425,7 +420,6 @@ class LeftSidePanel(QFrame):
 
 
 class BottomActionBar(QFrame):
-    """Fixed-height bottom action bar"""
     
     accept_clicked = pyqtSignal()
     reject_clicked = pyqtSignal()
@@ -483,7 +477,7 @@ class BottomActionBar(QFrame):
 
 class MainWindow(QMainWindow):
     result_ready = pyqtSignal(list)
-    monitor_signal = pyqtSignal(dict)  # Signal for orchestrator monitor events
+    monitor_signal = pyqtSignal(dict)  # signal for
     
     def __init__(self, app_context):
         super().__init__()
@@ -491,7 +485,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Smart Labeling v2.4 - Active Learning System")
         self.setGeometry(100, 100, 1400, 900)
         
-        # Set window style
+        # set window
         self.setStyleSheet(f"background-color: {COLORS['bg']};")
         
         self.setup_ui()
@@ -500,20 +494,19 @@ class MainWindow(QMainWindow):
         self.setup_timers()
     
     def setup_ui(self):
-        """Setup stable professional UI layout."""
         central = QWidget()
         self.setCentralWidget(central)
         
-        # Main vertical layout
+        # main vertical
         main_layout = QVBoxLayout(central)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Top control bar
+        # top control
         self.top_bar = TopControlBar()
         main_layout.addWidget(self.top_bar)
         
-        # Middle section with splitter (left panel + canvas)
+        # middle section
         middle_splitter = QSplitter(Qt.Orientation.Horizontal)
         middle_splitter.setStyleSheet(f"""
             QSplitter::handle {{
@@ -522,11 +515,11 @@ class MainWindow(QMainWindow):
             }}
         """)
         
-        # Left side panel
+        # left side
         self.left_panel = LeftSidePanel()
         middle_splitter.addWidget(self.left_panel)
         
-        # Canvas area
+        # canvas area
         canvas_container = QFrame()
         canvas_container.setStyleSheet(f"""
             QFrame {{
@@ -555,19 +548,18 @@ class MainWindow(QMainWindow):
         canvas_layout.addWidget(self.canvas_label)
         middle_splitter.addWidget(canvas_container)
         
-        # Set splitter sizes (left panel: 280px, rest: expanding)
+        # set splitter
         middle_splitter.setSizes([280, 1000])
         middle_splitter.setCollapsible(0, False)
         middle_splitter.setCollapsible(1, False)
         
         main_layout.addWidget(middle_splitter, stretch=1)
         
-        # Bottom action bar
+        # bottom action
         self.bottom_bar = BottomActionBar()
         main_layout.addWidget(self.bottom_bar)
     
     def setup_shortcuts(self):
-        """Setup keyboard shortcuts."""
         shortcuts = [
             ('a', self.accept),
             ('r', self.reject),
@@ -579,24 +571,23 @@ class MainWindow(QMainWindow):
             QShortcut(QKeySequence(key), self).activated.connect(callback)
     
     def setup_signals(self):
-        """Setup signal connections."""
         self.result_ready.connect(self.handle_result)
         self.monitor_signal.connect(self.app._process_monitor_event)
         
-        # Connect top bar signals
+        # connect top
         self.top_bar.folder_clicked.connect(self.select_folder)
         self.top_bar.class_clicked.connect(self.open_class_selector)
         self.top_bar.start_clicked.connect(self.start_labeling)
         self.top_bar.threshold_changed.connect(lambda v: setattr(state, 'threshold', v))
         
-        # Connect left panel signals
+        # connect left
         self.left_panel.stats_clicked.connect(self.show_al_stats)
         self.left_panel.force_retrain_clicked.connect(self.force_retrain)
         self.left_panel.create_version_clicked.connect(self.create_dataset_version)
         self.left_panel.list_versions_clicked.connect(self.list_dataset_versions)
         self.left_panel.promote_clicked.connect(self.promote_shadow_model)
         
-        # Connect bottom bar signals
+        # connect bottom
         self.bottom_bar.accept_clicked.connect(self.accept)
         self.bottom_bar.reject_clicked.connect(self.reject)
         self.bottom_bar.skip_clicked.connect(self.skip)
@@ -604,21 +595,19 @@ class MainWindow(QMainWindow):
         self.bottom_bar.log_clicked.connect(self.show_log)
     
     def setup_timers(self):
-        """Setup update timers."""
-        # Training status timer
+        # training status
         self.training_timer = QTimer()
         self.training_timer.timeout.connect(self._check_training_status)
         self.training_timer.start(2000)
         
-        # Queue status timer
+        # queue status
         self.queue_timer = QTimer()
         self.queue_timer.timeout.connect(self._update_queue_status)
         self.queue_timer.start(5000)
     
-    # ============ Event Handlers ============
+    # event handlers
     
     def select_folder(self):
-        """Select image folder with Active Learning prioritization."""
         folder = QFileDialog.getExistingDirectory(self, "Select Image Folder")
         if not folder:
             return
@@ -631,7 +620,7 @@ class MainWindow(QMainWindow):
         label_format = format_dialog.get_format()
         self.app.configure_label_output(folder_p, label_format)
         
-        # Use Active Learning to prioritize images
+        # use active
         state.image_files = self.app.select_folder_with_active_learning(folder_p)
         state.current_index = 0
         
@@ -647,7 +636,6 @@ class MainWindow(QMainWindow):
         self.update_stats()
     
     def open_class_selector(self):
-        """Open class selection dialog."""
         if not state.coco_classes:
             QMessageBox.warning(self, "Not Ready", "Wait for model to load")
             return
@@ -670,7 +658,6 @@ class MainWindow(QMainWindow):
                 self.top_bar.class_label.setStyleSheet(f"color: {COLORS['muted']}; font-size: 11px;")
     
     def start_labeling(self):
-        """Start labeling process."""
         if not state.worker_ready:
             QMessageBox.critical(
                 self,
@@ -693,16 +680,15 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(150, self.app.process_next)
     
     def handle_result(self, detections):
-        """Handle detection results."""
         state.current_detections = detections or []
         
-        # Store image size for COCO export
+        # store image
         if state.current_image:
             state._current_img_size = state.current_image.size
         else:
             state._current_img_size = (0, 0)
         
-        # Update entropy display
+        # update entropy
         if detections:
             entropy = state.last_image_entropy
             self.left_panel.entropy_label.setText(f"Entropy: {entropy:.3f}")
@@ -735,7 +721,7 @@ class MainWindow(QMainWindow):
             self.canvas_label.setText("No image loaded")
             return
         
-        # Validate image
+        # validate image
         try:
             _ = state.current_image.size
         except Exception:
@@ -769,7 +755,7 @@ class MainWindow(QMainWindow):
                 label = f"{cls_name}: {conf:.1f}% (e:{entropy:.2f})"
                 draw.text((b[0], max(0, b[1] - 14)), label, fill=color)
             
-            # Scale and display
+            # scale and
             iw, ih = img_draw.size
             scale = min(canvas_w / iw, canvas_h / ih, 1.0)
             if scale <= 0:
@@ -799,12 +785,11 @@ class MainWindow(QMainWindow):
             self.canvas_label.setText(f"Error: {str(e)}")
     
     def save_label(self, detections, auto=False):
-        """Save label with metadata."""
         img_path = str(state.image_files[state.current_index])
         img_w, img_h = getattr(state, '_current_img_size', (0, 0))
         entropy = getattr(state, 'last_image_entropy', 0.0)
         
-        # Save using data_manager
+        # save using
         self.app.data_manager.save_labels(
             image_path=img_path,
             detections=detections,
@@ -813,21 +798,19 @@ class MainWindow(QMainWindow):
             img_height=img_h
         )
         
-        # Check if retraining should be triggered
+        # check if
         self.app.on_label_saved(img_path, detections)
         
         self.update_stats()
     
-    # Action handlers
+    # action handlers
     def accept(self):
-        """Accept current detections."""
         if state.current_detections:
             self.save_label(state.current_detections, auto=False)
         state.current_index += 1
         self.app.process_next()
     
     def reject(self):
-        """Reject current detections."""
         try:
             self.app.save_autosave()
         except Exception:
@@ -836,7 +819,6 @@ class MainWindow(QMainWindow):
         self.app.process_next()
     
     def skip(self):
-        """Skip current image."""
         try:
             self.app.save_autosave()
         except Exception:
@@ -845,7 +827,6 @@ class MainWindow(QMainWindow):
         self.app.process_next()
     
     def show_log(self):
-        """Show auto-accepted images log."""
         if not state.auto_accepted_log:
             QMessageBox.information(self, "Log", "No auto-accepted images yet")
             return
@@ -853,10 +834,9 @@ class MainWindow(QMainWindow):
         msg = "\n".join([Path(p).name for p in state.auto_accepted_log[-20:]])
         QMessageBox.information(self, "Auto-accepted (last 20)", msg)
     
-    # Active Learning UI handlers
+    # active learn
     
     def show_al_stats(self):
-        """Show Active Learning statistics."""
         stats_dialog = QDialog(self)
         stats_dialog.setWindowTitle("Active Learning Statistics")
         stats_dialog.setMinimumSize(600, 500)
@@ -864,13 +844,13 @@ class MainWindow(QMainWindow):
         
         layout = QVBoxLayout()
         
-        # Get stats from all components
+        # get stats
         data_stats = self.app.data_manager.get_stats()
         selector_stats = self.app.sample_selector.get_stats()
         policy_status = self.app.retrain_policy.get_status()
         replay_stats = self.app.replay_buffer.get_stats()
         
-        # Build stats text
+        # build stats
         stats_text = f"""
 === Dataset Statistics ===
 Total Labeled: {data_stats['total_labeled']}
@@ -934,13 +914,11 @@ Average Entropy: {replay_stats.get('avg_entropy', 0):.4f}
         stats_dialog.exec()
     
     def _format_dict(self, d):
-        """Format dictionary for display."""
         if not d:
             return "  (empty)"
         return "\n".join(f"  {k}: {v}" for k, v in sorted(d.items()))
     
     def force_retrain(self):
-        """Force retraining regardless of policy."""
         can_train, info = self.app.retrain_policy.force_retrain()
         
         if not can_train:
@@ -963,7 +941,6 @@ Average Entropy: {replay_stats.get('avg_entropy', 0):.4f}
             self.app.trigger_training_with_validation()
     
     def create_dataset_version(self):
-        """Create new dataset version."""
         try:
             version = self.app.dataset_versioner.create_version(
                 data_manager=self.app.data_manager,
@@ -986,7 +963,6 @@ Average Entropy: {replay_stats.get('avg_entropy', 0):.4f}
             QMessageBox.critical(self, "Error", f"Failed to create version:\n{e}")
     
     def list_dataset_versions(self):
-        """List all dataset versions."""
         versions = self.app.dataset_versioner.list_versions()
         
         if not versions:
@@ -1047,7 +1023,6 @@ Average Entropy: {replay_stats.get('avg_entropy', 0):.4f}
         dialog.exec()
     
     def promote_shadow_model(self):
-        """Promote shadow model to active."""
         if not hasattr(self.app, 'orchestrator'):
             QMessageBox.warning(self, "Error", "Training system not initialized")
             return
@@ -1090,10 +1065,9 @@ Average Entropy: {replay_stats.get('avg_entropy', 0):.4f}
         else:
             QMessageBox.critical(self, "Error", f"Promotion failed:\n\n{result['error']}")
     
-    # ============ Update Timers ============
+    # update timers
     
     def _check_training_status(self):
-        """Update training status display."""
         if not hasattr(self.app, 'orchestrator'):
             return
         
@@ -1144,7 +1118,6 @@ Average Entropy: {replay_stats.get('avg_entropy', 0):.4f}
             )
     
     def update_stats(self):
-        """Update statistics display."""
         total = len(state.image_files) if state.image_files else 0
         labeled = len(state.labels) if state.labels else 0
         self.top_bar.progress_label.setText(f"Labeled: {labeled}/{total}")

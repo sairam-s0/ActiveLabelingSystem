@@ -17,13 +17,13 @@ class RetrainingPolicy:
         self.data_manager = data_manager
         self.model_manager = model_manager
         
-        # Thresholds
+        # thresholds
         self.min_samples = min_samples
         self.max_wait_hours = max_wait_hours
         self.perf_delta_threshold = perf_delta_threshold
         self.entropy_shift_threshold = entropy_shift_threshold
         
-        # State tracking
+        # state tracking
         self.last_train_time = None
         self.last_train_stats = None
         self.baseline_entropy_dist = None
@@ -35,7 +35,7 @@ class RetrainingPolicy:
             'recommendation': None
         }
         
-        # Policy 1: Sample count threshold (HARD REQUIREMENT)
+        # policy 1
         sample_trigger, sample_info = self._check_sample_threshold()
         reasons['policies']['sample_count'] = sample_info
         
@@ -43,23 +43,23 @@ class RetrainingPolicy:
             reasons['recommendation'] = f"Need {sample_info['needed']} more samples"
             return False, reasons
         
-        # Policy 2: Time-based trigger
+        # policy 2
         time_trigger, time_info = self._check_time_threshold()
         reasons['policies']['time_elapsed'] = time_info
         
-        # Policy 3: Entropy distribution shift
+        # policy 3
         entropy_trigger, entropy_info = self._check_entropy_shift()
         reasons['policies']['entropy_shift'] = entropy_info
         
-        # Policy 4: Class imbalance
+        # policy 4
         balance_trigger, balance_info = self._check_class_balance()
         reasons['policies']['class_balance'] = balance_info
         
-        # Policy 5: Performance degradation (if we have validation data)
+        # policy 5
         perf_trigger, perf_info = self._check_performance_delta()
         reasons['policies']['performance'] = perf_info
         
-        # Decision logic: Sample threshold + ANY other trigger
+        # decision logic
         triggers = [
             ('time', time_trigger),
             ('entropy', entropy_trigger),
@@ -74,12 +74,11 @@ class RetrainingPolicy:
             reasons['recommendation'] = f"Retrain triggered by: {', '.join(active_triggers)}"
             return True, reasons
         
-        # No triggers but samples ready
+        # no triggers
         reasons['recommendation'] = "Samples ready but no urgency detected"
         return False, reasons
     
     def _check_sample_threshold(self) -> Tuple[bool, Dict]:
-        """Check if we have minimum samples for training."""
         stats = self.data_manager.get_stats()
         queue_size = stats['training_queue_size']
         
@@ -114,14 +113,14 @@ class RetrainingPolicy:
         current_avg_entropy = stats.get('avg_entropy', 0)
         
         if not self.baseline_entropy_dist:
-            # First time - establish baseline
+            # first time
             self.baseline_entropy_dist = current_avg_entropy
             return False, {
                 'status': 'baseline_established',
                 'baseline': current_avg_entropy
             }
         
-        # Calculate shift
+        # calculate shift
         shift = abs(current_avg_entropy - self.baseline_entropy_dist)
         relative_shift = shift / (self.baseline_entropy_dist + 1e-6)
         
@@ -146,17 +145,17 @@ class RetrainingPolicy:
         if total == 0:
             return False, {'status': 'no_samples'}
         
-        # Calculate statistics
+        # calculate statistics
         max_count = max(class_counts.values())
         min_count = min(class_counts.values())
         
-        # Class proportions
+        # class proportions
         proportions = {
             cls: count / total 
             for cls, count in class_counts.items()
         }
         
-        # Check balance
+        # check balance
         min_proportion = min(proportions.values())
         imbalance_ratio = max_count / (min_count + 1e-6)
         
@@ -167,7 +166,7 @@ class RetrainingPolicy:
             'needs_balancing': min_proportion < 0.1 or imbalance_ratio > 10
         }
         
-        # Trigger if severely imbalanced
+        # trigger if
         trigger = info['needs_balancing']
         return trigger, info
     
@@ -175,13 +174,13 @@ class RetrainingPolicy:
         if not self.last_train_stats:
             return False, {'status': 'no_baseline'}
         
-        # Get recent samples (last 20)
+        # get recent
         recent_paths = self.data_manager.get_all_labeled_images()[:20]
         
         if len(recent_paths) < 10:
             return False, {'status': 'insufficient_recent_data'}
         
-        # Calculate average confidence on recent samples
+        # calculate average
         recent_confs = []
         for path in recent_paths:
             img_data = self.data_manager.get_labels(path)
@@ -196,7 +195,7 @@ class RetrainingPolicy:
         current_avg_conf = np.mean(recent_confs)
         baseline_avg_conf = self.last_train_stats.get('avg_confidence', current_avg_conf)
         
-        # Performance delta
+        # performance delta
         delta = baseline_avg_conf - current_avg_conf
         
         info = {
@@ -206,14 +205,14 @@ class RetrainingPolicy:
             'threshold': self.perf_delta_threshold
         }
         
-        # Trigger if performance dropped significantly
+        # trigger if
         trigger = delta >= self.perf_delta_threshold
         return trigger, info
     
     def on_training_complete(self, training_result: Dict):
         self.last_train_time = datetime.now()
         
-        # Store training statistics
+        # store training
         stats = self.data_manager.get_stats()
         self.last_train_stats = {
             'sample_count': training_result.get('sample_count', 0),
@@ -223,13 +222,12 @@ class RetrainingPolicy:
             'timestamp': self.last_train_time.isoformat()
         }
         
-        # Update baseline entropy
+        # update baseline
         self.baseline_entropy_dist = stats.get('avg_entropy', 0)
         
         print(f"[RetrainPolicy] Training completed, baseline updated")
     
     def _calculate_avg_confidence(self) -> float:
-        """Calculate average confidence across all labeled samples."""
         all_confs = []
         for img_path in self.data_manager.get_all_labeled_images():
             img_data = self.data_manager.get_labels(img_path)

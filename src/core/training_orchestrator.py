@@ -19,16 +19,15 @@ import threading
 import time
 
 def start_orchestrator_monitor(orchestrator, callback):
-    """Background thread that polls Ray status safely"""
     def loop():
         while True:
             try:
-                # Check completion
+                # check completion
                 result = orchestrator.check_training_completion()
                 if result:
                     callback({'type': 'completion', 'data': result})
                 
-                # Check status
+                # check status
                 status = orchestrator.get_training_status()
                 callback({'type': 'status', 'data': status})
                 
@@ -41,7 +40,6 @@ def start_orchestrator_monitor(orchestrator, callback):
     t.start()
 
 class TrainingOrchestrator:
-    """Manages shadow model training workflow."""
     
     def __init__(
         self,
@@ -51,35 +49,26 @@ class TrainingOrchestrator:
         min_samples: int = 30,
         num_gpus: int = 1
     ):
-        """
-        Args:
-            data_manager: DataManager instance for label storage
-            model_manager: ModelManager instance for model versioning
-            replay_buffer: ReplayBuffer instance for experience replay
-            min_samples: Minimum samples needed to trigger training
-            num_gpus: Number of GPUs to allocate to Ray
-        """
         self.data_manager = data_manager
         self.model_manager = model_manager
         self.replay_buffer = replay_buffer
         self.min_samples = min_samples
         self.num_gpus = num_gpus
         
-        # Training state
+        # training state
         self.shadow_trainer = None
         self.training_future = None
         self.ray_initialized = False
         
-        # Callbacks for UI updates
+        # callbacks for
         self.on_status_change: Optional[Callable] = None
         self.on_training_complete: Optional[Callable] = None
         self.on_training_failed: Optional[Callable] = None
         
-        # Initialize Ray
-        #self._init_ray()
+        # initialize ray
+        # self init
     
     def _init_ray(self) -> bool:
-        """Initialize Ray for distributed training."""
         try:
             if ray.is_initialized():
                 print("[Orchestrator] Ray already initialized")
@@ -97,7 +86,7 @@ class TrainingOrchestrator:
             print("[Orchestrator] Ray initialized successfully")
             self.ray_initialized = True
             
-            # Try to create shadow trainer if we have class mapping
+            # try to
             self._try_create_trainer()
             return True
             
@@ -115,7 +104,6 @@ class TrainingOrchestrator:
         return self._init_ray()
     
     def _try_create_trainer(self):
-        """Attempt to create shadow trainer if class mapping exists."""
         if not self.ray_initialized:
             return False
         
@@ -147,27 +135,21 @@ class TrainingOrchestrator:
             return False
     
     def check_training_trigger(self) -> bool:
-        """
-        Check if training should be triggered based on queue size.
-        
-        Returns:
-            True if training was triggered, False otherwise
-        """
         if not self.ray_initialized:
             return False
         
-        # Ensure trainer exists
+        # ensure trainer
         if not self.shadow_trainer:
             self._try_create_trainer()
             if not self.shadow_trainer:
                 return False
         
-        # Check if already training
+        # check if
         if self.is_training():
             print("[Orchestrator] Training already in progress")
             return False
         
-        # Check queue size
+        # check queue
         stats = self.data_manager.get_stats()
         queue_size = stats['training_queue_size']
         
@@ -178,23 +160,16 @@ class TrainingOrchestrator:
         return False
     
     def is_training(self) -> bool:
-        """Check if training is currently in progress."""
         if not self.training_future:
             return False
         
         try:
             ready, _ = ray.wait([self.training_future], timeout=0)
-            return len(ready) == 0  # Not ready = still training
+            return len(ready) == 0  # not ready
         except:
             return False
     
     def trigger_training(self) -> bool:
-        """
-        Manually trigger shadow model training.
-        
-        Returns:
-            True if training started successfully, False otherwise
-        """
         if not self.shadow_trainer:
             print("[Orchestrator] Shadow trainer not available")
             return False
@@ -204,7 +179,7 @@ class TrainingOrchestrator:
             return False
         
         try:
-            # Get training samples
+            # get training
             samples = self.data_manager.get_training_batch(
                 count=self.min_samples,
                 new_only=True,
@@ -215,11 +190,11 @@ class TrainingOrchestrator:
                 print(f"[Orchestrator] Not enough samples: {len(samples)}/{self.min_samples}")
                 return False
             
-            # Get replay samples
+            # get replay
             replay_paths = self.data_manager.get_replay_samples(count=10)
             replay_samples = self.data_manager.prepare_training_samples(replay_paths)
             
-            # Fill trainer buffer with fresh samples, then train with replay data
+            # fill trainer
             print(f"[Orchestrator] Starting training: {len(samples)} new + {len(replay_samples)} replay")
             add_result = ray.get(self.shadow_trainer.add_labels.remote(samples), timeout=10)
             if not add_result.get('ready_to_train'):
@@ -230,7 +205,7 @@ class TrainingOrchestrator:
                 return False
             self.training_future = self.shadow_trainer.train.remote(replay_samples)
             
-            # Notify UI
+            # notify ui
             if self.on_status_change:
                 self.on_status_change({
                     'status': 'training_started',
@@ -247,12 +222,6 @@ class TrainingOrchestrator:
             return False
     
     def get_training_status(self) -> Dict:
-        """
-        Get current training status.
-        
-        Returns:
-            Dictionary with training progress information
-        """
         if not self.shadow_trainer:
             return {
                 'available': False,
@@ -280,12 +249,6 @@ class TrainingOrchestrator:
             }
     
     def check_training_completion(self) -> Optional[Dict]:
-        """
-        Check if training has completed and handle result.
-        
-        Returns:
-            Training result dict if completed, None if still training
-        """
         if not self.training_future:
             return None
         
@@ -293,9 +256,9 @@ class TrainingOrchestrator:
             ready, _ = ray.wait([self.training_future], timeout=0)
             
             if not ready:
-                return None  # Still training
+                return None  # still training
             
-            # Training completed - get result
+            # training completed
             result = ray.get(self.training_future)
             self.training_future = None
             
@@ -311,42 +274,31 @@ class TrainingOrchestrator:
             return None
     
     def _handle_training_success(self, result: Dict):
-        """Handle successful training completion."""
         print(f"[Orchestrator] Training completed successfully!")
         print(f"[Orchestrator] Trained on {result['sample_count']} samples")
         print(f"[Orchestrator] Model saved to: {result['save_path']}")
         
-        # Mark samples as trained
+        # mark samples
         trained_paths = result.get('trained_paths', [])
         self.data_manager.mark_trained(trained_paths)
         
-        # Add to replay buffer
+        # add to
         replay_samples = self.data_manager.prepare_training_samples(trained_paths)
         self.replay_buffer.add(replay_samples)
         
-        # Notify UI
+        # notify ui
         if self.on_training_complete:
             self.on_training_complete(result)
     
     def _handle_training_failure(self, result: Dict):
-        """Handle training failure."""
         error = result.get('error', 'Unknown error')
         print(f"[Orchestrator] Training failed: {error}")
         
-        # Notify UI
+        # notify ui
         if self.on_training_failed:
             self.on_training_failed(result)
     
     def promote_shadow_model(self, validate: bool = True) -> Dict:
-        """
-        Promote shadow model to active.
-        
-        Args:
-            validate: Whether to validate model before promotion
-        
-        Returns:
-            Result dictionary with success status and details
-        """
         shadow_path = "models/shadow_candidate.pt"
         
         if not Path(shadow_path).exists():
@@ -355,7 +307,7 @@ class TrainingOrchestrator:
                 'error': 'No shadow model found. Train a model first.'
             }
         
-        # Optional validation
+        # optional validation
         if validate:
             comparison = self.model_manager.compare_models(
                 base_path=self.model_manager.resolve_active_path(),
@@ -370,7 +322,7 @@ class TrainingOrchestrator:
                     'comparison': comparison
                 }
         
-        # Perform promotion
+        # perform promotion
         result = self.model_manager.promote_shadow(shadow_path, validate=validate)
         
         if result['success']:
@@ -379,7 +331,6 @@ class TrainingOrchestrator:
         return result
     
     def get_queue_status(self) -> Dict:
-        """Get status of training queue."""
         stats = self.data_manager.get_stats()
         return {
             'queue_size': stats['training_queue_size'],
@@ -389,10 +340,9 @@ class TrainingOrchestrator:
         }
     
     def shutdown(self):
-        """Cleanup resources."""
         print("[Orchestrator] Shutting down...")
         
-        # Explicitly shutdown Ray to kill daemon threads
+        # explicitly shutdown
         if ray.is_initialized():
             try:
                 ray.shutdown()

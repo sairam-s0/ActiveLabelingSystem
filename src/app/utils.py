@@ -1,7 +1,4 @@
-# app/utils.py
-"""
-Utility functions for the application
-"""
+# src/app/utils.py
 
 import hashlib
 from pathlib import Path
@@ -11,13 +8,11 @@ from PyQt6.QtGui import QImage, QPixmap
 
 
 def default_color_for_name(name: str) -> str:
-    """Generate consistent color for class name using hash."""
     h = int(hashlib.md5(name.encode()).hexdigest()[:6], 16)
     return f"#{h:06x}"
 
 
 def detect_gpu():
-    """Detect if CUDA GPU is available."""
     try:
         import torch
         return torch.cuda.is_available()
@@ -26,7 +21,6 @@ def detect_gpu():
 
 
 def safe_close_image(image):
-    """Safely close PIL image without raising exceptions."""
     if image:
         try:
             image.close()
@@ -35,7 +29,6 @@ def safe_close_image(image):
 
 
 def load_image(image_path):
-    """Load image safely and normalize orientation/mode."""
     img = Image.open(image_path)
     img = ImageOps.exif_transpose(img)
     if img.mode != "RGB":
@@ -44,7 +37,6 @@ def load_image(image_path):
 
 
 def pil_to_pixmap(image):
-    """Convert PIL image to QPixmap."""
     if image is None:
         return QPixmap()
 
@@ -58,10 +50,6 @@ def pil_to_pixmap(image):
 
 
 def scale_to_fit(pixmap, target_size):
-    """
-    Scale pixmap to fit target QSize while preserving aspect ratio.
-    Returns (scaled_pixmap, scale_factor).
-    """
     if pixmap.isNull():
         return pixmap, 1.0
 
@@ -84,7 +72,6 @@ def scale_to_fit(pixmap, target_size):
 
 
 def validate_bbox(bbox, img_width, img_height):
-    """Validate and clamp bounding box coordinates."""
     x1, y1, x2, y2 = bbox
     x1 = max(0, min(img_width, x1))
     y1 = max(0, min(img_height, y1))
@@ -94,7 +81,6 @@ def validate_bbox(bbox, img_width, img_height):
 
 
 def format_class_display(classes, max_display=3):
-    """Format class list for UI display."""
     if not classes:
         return "None selected"
     

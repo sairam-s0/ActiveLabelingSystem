@@ -1,9 +1,4 @@
-# main.py -- Smart Labeling v2.3
-"""
-Smart Labeling v2.3 - Multi-class detection with modular architecture
-Entry point and application coordinator
-No of times edited: 49
-"""
+# src/main.py
 
 from multiprocessing import Process
 from core.dataset_versioner import DatasetVersioner
@@ -24,24 +19,24 @@ import warnings
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
 
-# Path setup
+# path setup
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QTimer
 
-# Import modular components
+# import modular
 from app import state, utils
 from app.window import MainWindow
 
-# Core modules
+# core modules
 from core.training_orchestrator import TrainingOrchestrator, start_orchestrator_monitor
 from core.replay_buffer import ReplayBuffer
 from core.data_manager import DataManager
 from core.model_manager import ModelManager
 
-# Features
+# features
 try:
     from features.manual import ManualManager
 except Exception:
@@ -78,7 +73,6 @@ def init_worker(weights, device):
 
 
 def detect_worker(args):
-    """Worker detection function with multi-class support."""
     from core.entropy import EntropyCalculator
 
     global _WORKER_MODEL
@@ -149,12 +143,12 @@ def detect_worker(args):
                     if name in class_names and conf >= thresh:
                         if scale != 1.0 and scale > 0:
                             bbox = [c / scale for c in bbox]
-                        # ---- Active Learning: entropy calculation ----
+                        # active learn
                         try:
                             num_classes = len(model_names)
                             entropy = EntropyCalculator.from_yolo_output(box, num_classes)
                         except Exception:
-                            # fallback if entropy calc fails
+                            # fallback if
                             entropy = 1.0 - (conf / 100.0)
                         matching.append({
                                 'bbox': bbox,
@@ -179,10 +173,10 @@ def detect_worker(args):
             pass
 
 
-# ============ APPLICATION CONTEXT ============
+# application context
 
 class SmartLabelingApp:    
-    # Property accessors for backward compatibility
+    # property accessors
     @property
     def current_image(self):
         return state.current_image
@@ -264,19 +258,19 @@ class SmartLabelingApp:
         state.min_training_samples = value
     
     def __init__(self):
-        # Initialize GPU detection
+        # initialize gpu
         state.has_gpu = utils.detect_gpu()
         state.device = 'cuda' if state.has_gpu else 'cpu'
         
-        # Load model class names
+        # load model
         self._load_model_classes()
         
-        # Initialize managers
+        # initialize managers
         self.data_manager = DataManager("labels.json")
         self.replay_buffer = ReplayBuffer(max_size=200)
         self.model_manager = ModelManager("models")
         
-        # Initialize training orchestrator
+        # initialize training
         self.orchestrator = TrainingOrchestrator(
             data_manager=self.data_manager,
             model_manager=self.model_manager,
@@ -286,22 +280,22 @@ class SmartLabelingApp:
         )
 
         
-        # Setup callbacks
+        # set callback
         self.orchestrator.on_status_change = self._on_training_status_change
         self.orchestrator.on_training_complete = self._on_training_complete
         self.orchestrator.on_training_failed = self._on_training_failed
         
-        # Create window FIRST (no manual manager yet)
+        # create window
         self.window = MainWindow(self)
         
-        # NOW create manual manager with all dependencies available
+        # now create
         self.manual = ManualManager(
             host=self,
             window=self.window,
             state=state
         )
         
-        # Hook for graceful shutdown - override window close event
+        # hook for
         self.window.closeEvent = self._on_window_close
         
         self.entropy_calculator = EntropyCalculator()
@@ -320,24 +314,22 @@ class SmartLabelingApp:
         self._monitor_started = False
         
         
-        # Initialize worker
+        # worker init
         self.init_worker()
         
-        # Register cleanup
+        # register cleanup
         atexit.register(self.cleanup)
     
     def _on_window_close(self, event):
-        """Graceful shutdown before app closes."""
-        # Clean up manual mode first if active
+        # clean up
         if hasattr(self, 'manual') and self.manual._active:
             print("[Main] Cleaning up manual mode before shutdown...")
             self.manual.exit_manual_mode()
         
-        # Accept the close event and proceed
+        # accept the
         event.accept()
     
     def _load_model_classes(self):
-        """Load class names from model metadata."""
         try:
             from ultralytics import YOLO
             print("Loading model class names from metadata...")
@@ -346,7 +338,7 @@ class SmartLabelingApp:
             print(f"✅ Loaded {len(state.coco_classes)} classes.")
         except Exception as e:
             print(f"⚠️ Warning: Could not load class names from {state.weights}: {e}")
-            # Fallback to common COCO classes
+            # fallback to
             state.coco_classes = [
                 "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train",
                 "truck", "boat", "traffic light", "fire hydrant", "stop sign",
@@ -452,14 +444,12 @@ class SmartLabelingApp:
             print(f"[persist_labels] failed: {e}")
 
 
-
     def trigger_training_with_validation(self):
-        # Lazy-init Ray/monitor only when training is requested.
+        # lazy init
         self._start_background_monitor()
         state.validation_before_model = self.model_manager.resolve_active_path()
         self.orchestrator.trigger_training()
     def init_worker(self):
-        """Initialize worker pool in background thread"""
         def init():
             try:
                 print("[Worker] Initializing in background...")
@@ -478,31 +468,29 @@ class SmartLabelingApp:
         t.start()
     
     def _start_background_monitor(self):
-        """Start Ray and orchestrator monitoring after UI is ready."""
         if self._monitor_started:
             return
 
         def init_ray_and_monitor():
-            # Initialize Ray
+            # initialize ray
             print("[Main] Starting Ray initialization...")
             if not self.orchestrator.initialize_ray():
                 print("[Main] Ray initialization failed - background training disabled")
                 return
             print("[Main] Ray ready, starting monitor")
             
-            # Start background monitor
+            # start background
             start_orchestrator_monitor(
                 self.orchestrator,
                 lambda event: self.window.monitor_signal.emit(event)
             )
             self._monitor_started = True
         
-        # Run in background thread to avoid blocking UI
+        # run in
         t = threading.Thread(target=init_ray_and_monitor, daemon=True)
         t.start()
     
     def select_folder(self):
-        """Select folder with active learning prioritization."""
         folder = QFileDialog.getExistingDirectory(
             self.window,
             "Select Image Folder",
@@ -515,13 +503,13 @@ class SmartLabelingApp:
         
         folder_path = Path(folder)
         
-        # Ensure autosave setup
+        # ensure autosave
         self._ensure_autosave_setup(folder_path)
         
-        # Load previous session if exists
+        # load previous
         self.load_autosave()
         
-        # Get prioritized image list
+        # get prioritized
         state.image_files = self.select_folder_with_active_learning(folder_path)
         
         if not state.image_files:
@@ -533,23 +521,22 @@ class SmartLabelingApp:
             )
             return
         
-        # Update folder label
+        # update folder
         folder_name = folder_path.name
         if len(folder_name) > 25:
             folder_name = folder_name[:22] + "..."
         self.window.top_bar.folder_btn.setText(f"📁 {folder_name}")
         
-        # Reset navigation
+        # reset navigation
         if state.current_index >= len(state.image_files):
             state.current_index = 0
         
-        # Update UI
+        # update ui
         self.window.update_stats()
         
         print(f"[Folder] Loaded {len(state.image_files)} images (AL prioritized)")
     
     def select_classes(self):
-        """Open class selection dialog."""
         from app.dialogs import ClassSelectorDialog
         
         dialog = ClassSelectorDialog(
@@ -569,7 +556,6 @@ class SmartLabelingApp:
                 print(f"[Classes] Selected: {selected}")
     
     def start_labeling(self):
-        """Start the labeling workflow."""
         if not state.image_files:
             QMessageBox.warning(
                 self.window,
@@ -586,11 +572,10 @@ class SmartLabelingApp:
             )
             return
         
-        # Start from current index
+        # start from
         self.process_next()
     
     def process_next(self):
-        """Process next image in workflow."""
         if state.current_index >= len(state.image_files):
             QMessageBox.information(
                 self.window,
@@ -601,14 +586,14 @@ class SmartLabelingApp:
         
         img_path = state.image_files[state.current_index]
         
-        # Check if already labeled
+        # check if
         if img_path in state.labels:
             print(f"[Skip] Already labeled: {img_path}")
             state.current_index += 1
             QTimer.singleShot(0, self.process_next)
             return
         
-        # Load and display image
+        # load and
         try:
             state.current_image = utils.load_image(img_path)
             state.current_image_path = img_path
@@ -620,21 +605,21 @@ class SmartLabelingApp:
             )
             self.window.canvas_label.setPixmap(scaled_pixmap)
             
-            # Update filename display
+            # update filename
             filename = Path(img_path).name
             if len(filename) > 40:
                 filename = filename[:37] + "..."
             if hasattr(self.window.bottom_bar, "filename_label"):
                 self.window.bottom_bar.filename_label.setText(filename)
             
-            # Update stats
+            # update stats
             self.window.update_stats()
             
-            # Notify manual mode of image change
+            # notify manual
             if hasattr(self, 'manual'):
                 self.manual.on_image_changed()
             
-            # Run detection
+            # run detection
             self.run_detect(img_path)
             
         except Exception as e:
@@ -643,7 +628,6 @@ class SmartLabelingApp:
             QTimer.singleShot(0, self.process_next)
     
     def run_detect(self, img_path):
-        """Run detection on image in worker process."""
         try:
             args = (
                 img_path,
@@ -676,14 +660,12 @@ class SmartLabelingApp:
         return random.random() >= state.qa_rate
     
     def _ensure_autosave_setup(self, folder_path):
-        """Setup autosave file path."""
         try:
             state.autosave_file = str(folder_path / "labels_autosave.json")
         except Exception:
             state.autosave_file = None
     
     def save_autosave(self):
-        """Save current progress to autosave file."""
         if not state.autosave_file:
             return
         
@@ -736,7 +718,6 @@ class SmartLabelingApp:
             print(f"[save_autosave] failed: {e}")
     
     def load_autosave(self):
-        """Load progress from autosave file."""
         if not state.autosave_file:
             return
         
@@ -784,7 +765,6 @@ class SmartLabelingApp:
             print(f"[load_autosave] failed: {e}")
 
     def _restore_from_internal_labels(self):
-        """Restore progress from internal labels store when autosave is missing."""
         if not hasattr(self, "data_manager"):
             return
         if not self.data_manager.data.get("images"):
@@ -822,20 +802,17 @@ class SmartLabelingApp:
             print(f"[UI] Monitor event error: {e}")
     
     def update_stats(self):
-        """Update statistics display."""
         if hasattr(self, 'window'):
             self.window.update_stats()
     
-    # Training callbacks
+    # train callback
     def _on_training_status_change(self, status):
-        """Handle training status changes."""
         if status['status'] == 'training_started':
             msg = f"Training started: {status['sample_count']} samples"
             self.window.top_bar.progress_label.setText(msg)
             print(f"[Main] {msg}")
     
     def _on_training_complete(self, result):
-        """Handle training completion."""
         msg = f"Training complete! Model saved to: {result['save_path']}"
         self.window.top_bar.progress_label.setText("Training complete")
         
@@ -849,7 +826,6 @@ class SmartLabelingApp:
         )
     
     def _on_training_failed(self, result):
-        """Handle training failure."""
         error = result.get('error', 'Unknown error')
         QMessageBox.critical(
             self.window,
@@ -859,7 +835,6 @@ class SmartLabelingApp:
         )
     
     def cleanup(self):
-        """Cleanup resources on exit."""
         print("[Cleanup] shutting down executor...")
         try:
             if state.executor:
@@ -875,18 +850,16 @@ class SmartLabelingApp:
         print("[Cleanup] done")
     
     def show(self):
-        """Show the main window."""
         self.window.show()
-
 
 
 def main():
     qt_app = QApplication(sys.argv)
     
-    # Suppress Qt stylesheet warnings
+    # suppress qt
     warnings.filterwarnings("ignore", category=UserWarning, module="PyQt6")
     
-    # Fix QMessageBox text visibility
+    # fix qmessagebox
     qt_app.setStyleSheet("""
         QMessageBox {
             background-color: white;
