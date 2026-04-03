@@ -109,8 +109,7 @@ pip install .
 ```
 
 Optional: install CUDA-enabled PyTorch for GPU inference/training from https://pytorch.org/get-started/locally/.
-
-After publishing this project to PyPI, users can install it directly with:
+Users can install it directly with:
 
 ```bash
 pip install Active-Labeling-System
@@ -123,16 +122,7 @@ After install:
 ```bash
 als
 ```
-
-## Publish to PyPI (GitHub Actions)
-
-This repo includes `.github/workflows/publish-pypi.yml`.
-
-1. In PyPI, configure Trusted Publisher for this GitHub repo/workflow.
-2. Bump version in `pyproject.toml`.
-3. Push a tag like `v0.1.1`.
-4. GitHub Actions builds and publishes automatically to PyPI.
-
+---
 ## How to use
 
 ### 1. Select image folder and output format
