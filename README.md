@@ -60,6 +60,7 @@ Local-first AI-assisted image labeling with active learning, manual box tools, b
 
 ```text
 ActiveLabelingSystem/
+  images/
   src/
     app/
       window.py
@@ -142,11 +143,16 @@ This repo includes `.github/workflows/publish-pypi.yml`.
   - `Plain JSON` -> writes `labels.json`
 - The app also keeps internal state in `.labels_internal.json` and autosave in `labels_autosave.json` inside the selected folder.
 
+![Folder Selection](./images/folder_selection.png)
+![Format Selection](./images/format_selection.png)
+
 ### 2. Select classes
 
 - Click `Select Classes`.
 - Pick one or more classes.
 - Add custom classes from the same dialog when needed.
+
+![Class Selection](./images/class_selection.png)
 
 ### 3. Start labeling
 
@@ -157,7 +163,11 @@ This repo includes `.github/workflows/publish-pypi.yml`.
   - `Skip (N)`
   - `Manual (M)`
 
+![Active Learning Options](./images/active_learning_options.png)
+
 ### 4. Manual mode (box drawing)
+
+![Normal GUI](./images/normal_full_gui.png)
 
 - Draw boxes by click-drag on canvas.
 - Save boxes and move next with:
@@ -167,6 +177,8 @@ This repo includes `.github/workflows/publish-pypi.yml`.
   - `Delete` -> delete last box
   - `1..9` -> switch class index
 
+![Manual Labelling](./images/manual_labelling.png)
+
 ### 5. Monitor active learning and training
 
 - Left panel shows:
@@ -174,6 +186,8 @@ This repo includes `.github/workflows/publish-pypi.yml`.
   - queue size
   - training progress/status.
 - Use `Force Retrain` if you want to bypass normal policy checks (still requires minimum samples).
+
+![Dataset Statistics](./images/dataset_stats.png)
 
 ### 6. Version and promote
 
