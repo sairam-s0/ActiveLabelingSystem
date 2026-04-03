@@ -23,7 +23,7 @@ from concurrent.futures import ProcessPoolExecutor
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QTimer
 
 # import modular

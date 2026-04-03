@@ -105,18 +105,33 @@ python -m venv .venv
 # Linux/macOS
 # source .venv/bin/activate
 
-pip install -r src/requirements.txt
+pip install .
 ```
 
 Optional: install CUDA-enabled PyTorch for GPU inference/training from https://pytorch.org/get-started/locally/.
 
-## Run the app
-
-From repo root:
+After publishing this project to PyPI as `als`, users can install it directly with:
 
 ```bash
-python src/main.py
+pip install als
 ```
+
+## Run the app
+
+After install:
+
+```bash
+als
+```
+
+## Publish to PyPI (GitHub Actions)
+
+This repo includes `.github/workflows/publish-pypi.yml`.
+
+1. In PyPI, configure Trusted Publisher for this GitHub repo/workflow.
+2. Bump version in `pyproject.toml`.
+3. Push a tag like `v0.1.1`.
+4. GitHub Actions builds and publishes automatically to PyPI.
 
 ## How to use
 
@@ -128,16 +143,11 @@ python src/main.py
   - `Plain JSON` -> writes `labels.json`
 - The app also keeps internal state in `.labels_internal.json` and autosave in `labels_autosave.json` inside the selected folder.
 
-![Folder Selection](./images/folder_selection.png)
-![Format Selection](./images/format_selection.png)
-
 ### 2. Select classes
 
 - Click `Select Classes`.
 - Pick one or more classes.
 - Add custom classes from the same dialog when needed.
-
-![Class Selection](./images/class_selection.png)
 
 ### 3. Start labeling
 
@@ -148,11 +158,7 @@ python src/main.py
   - `Skip (N)`
   - `Manual (M)`
 
-![Active Learning Options](./images/active_learning_options.png)
-
 ### 4. Manual mode (box drawing)
-
-![Normal GUI](./images/normal_full_gui.png)
 
 - Draw boxes by click-drag on canvas.
 - Save boxes and move next with:
@@ -162,8 +168,6 @@ python src/main.py
   - `Delete` -> delete last box
   - `1..9` -> switch class index
 
-![Manual Labelling](./images/manual_labelling.png)
-
 ### 5. Monitor active learning and training
 
 - Left panel shows:
@@ -171,8 +175,6 @@ python src/main.py
   - queue size
   - training progress/status.
 - Use `Force Retrain` if you want to bypass normal policy checks (still requires minimum samples).
-
-![Dataset Statistics](./images/dataset_stats.png)
 
 ### 6. Version and promote
 

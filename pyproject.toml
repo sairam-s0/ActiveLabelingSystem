@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Active-Labeling-System"
+version = "0.1.0"
+description = "Active Labeling System (ALS) with a PyQt6 GUI and active-learning workflow."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "sairam-s0" }
+]
+keywords = ["labeling", "computer-vision", "active-learning", "yolo", "pyqt6"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.24.0",
+  "torch>=2.0.0",
+  "ultralytics>=8.0.0",
+  "opencv-python>=4.8.0",
+  "Pillow>=10.0.0",
+  "PyQt6>=6.5.0",
+  "PyYAML>=6.0",
+  "pandas>=2.0.0",
+  "tqdm>=4.65.0",
+  "ray>=2.8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/sairam-s0/ActiveLabelingSystem"
+Repository = "https://github.com/sairam-s0/ActiveLabelingSystem"
+Issues = "https://github.com/sairam-s0/ActiveLabelingSystem/issues"
+
+[project.scripts]
+als = "als.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["als*", "app*", "core*", "features*"]
+exclude = ["*.__pycache__", "__pycache__"]

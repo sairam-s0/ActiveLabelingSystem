@@ -1,0 +1,36 @@
+# Python cache/compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build/distribution artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Project runtime/generated data (do not push)
+images/
+datasets/
+models/
+src/datasets/
+src/models/
+yolov8m.pt
+labels.json
+labels_coco.json
+labels_autosave.json
+.labels_internal.json
+
+# OS files
+.DS_Store
+Thumbs.db
