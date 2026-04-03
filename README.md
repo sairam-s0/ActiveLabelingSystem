@@ -60,7 +60,6 @@ Local-first AI-assisted image labeling with active learning, manual box tools, b
 
 ```text
 ActiveLabelingSystem/
-  images/
   src/
     app/
       window.py
@@ -110,10 +109,10 @@ pip install .
 
 Optional: install CUDA-enabled PyTorch for GPU inference/training from https://pytorch.org/get-started/locally/.
 
-After publishing this project to PyPI as `als`, users can install it directly with:
+After publishing this project to PyPI, users can install it directly with:
 
 ```bash
-pip install als
+pip install Active-Labeling-System
 ```
 
 ## Run the app
