@@ -137,18 +137,6 @@ After setup completes, start the GUI with:
 als --start
 ```
 
-## Publish to PyPI (GitHub Actions)
-
-This repo includes `.github/workflows/publish-pypi.yml`.
-
-1. In PyPI, configure Trusted Publisher for this GitHub repo/workflow:
-   - Owner: `sairam-s0`
-   - Repository: `ActiveLabelingSystem`
-   - Workflow: `publish-pypi.yml`
-2. Bump version in `pyproject.toml`.
-3. Push a tag like `v0.1.1`.
-4. GitHub Actions builds and publishes automatically to PyPI.
-
 ## How to use
 
 ### 1. Select image folder and output format
