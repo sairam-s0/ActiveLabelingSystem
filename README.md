@@ -108,7 +108,6 @@ python -m venv .venv
 pip install .
 ```
 
-Optional: install CUDA-enabled PyTorch for GPU inference/training from https://pytorch.org/get-started/locally/.
 Users can install it directly with:
 
 ```bash
@@ -117,10 +116,25 @@ pip install Active-Labeling-System
 
 ## Run the app
 
-After install:
+After install, run the bootstrap/setup command first:
 
 ```bash
 als
+```
+
+This command:
+
+- runs `run_tests.bat` on Windows
+- checks Python and runtime dependencies
+- installs missing packages automatically
+- detects GPU hardware
+- installs CUDA-enabled PyTorch automatically for NVIDIA GPUs
+- falls back to CPU mode for unsupported GPU setups
+
+After setup completes, start the GUI with:
+
+```bash
+als --start
 ```
 
 ## Publish to PyPI (GitHub Actions)
@@ -134,6 +148,7 @@ This repo includes `.github/workflows/publish-pypi.yml`.
 2. Bump version in `pyproject.toml`.
 3. Push a tag like `v0.1.1`.
 4. GitHub Actions builds and publishes automatically to PyPI.
+
 ## How to use
 
 ### 1. Select image folder and output format

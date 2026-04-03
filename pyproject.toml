@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Active-Labeling-System"
-version = "0.1.0"
+version = "0.1.4"
 description = "Active Labeling System (ALS) with a PyQt6 GUI and active-learning workflow."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,18 +25,7 @@ classifiers = [
   "Operating System :: OS Independent",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-dependencies = [
-  "numpy>=1.24.0",
-  "torch>=2.0.0",
-  "ultralytics>=8.0.0",
-  "opencv-python>=4.8.0",
-  "Pillow>=10.0.0",
-  "PyQt6>=6.5.0",
-  "PyYAML>=6.0",
-  "pandas>=2.0.0",
-  "tqdm>=4.65.0",
-  "ray>=2.8.0",
-]
+dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/sairam-s0/ActiveLabelingSystem"
@@ -49,6 +38,9 @@ als = "als.__main__:main"
 [tool.setuptools]
 package-dir = {"" = "src"}
 py-modules = ["main"]
+
+[tool.setuptools.package-data]
+als = ["requirements.txt", "run_tests.bat"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
