@@ -1,0 +1,20 @@
+# LabelOps runtime dependencies
+
+# Core runtime
+numpy>=1.24.0
+torch>=2.0.0
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+PyQt6>=6.5.0
+PyYAML>=6.0
+
+# Optional but used in parts of the project
+pandas>=2.0.0
+tqdm>=4.65.0
+ray>=2.8.0
+
+# Notes:
+# - GPU/CUDA support depends on how PyTorch is installed on your machine.
+# - For CUDA-enabled wheels, see: https://pytorch.org/get-started/locally/
+# - SAM support uses ultralytics SAM models and downloads sam_b.pt on first use if absent.

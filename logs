@@ -1,0 +1,11 @@
+[12:57:42.837] --- Printing AFTER setting up clean logging ---
+[12:57:42.837] [DataManager]    📥 Queued image for training: 31Oc3kJvxaL_2_11zon.jpeg (Queue: 8/30)
+[12:57:42.837] [DataManager]    🏷️  Class mapping updated: {'bottle': 0}
+[12:57:42.837] [ReplayBuffer]   🔄 Replay Buffer: Added 1 sample(s) (Total: 8)
+[12:57:42.837] [AL]             🚀 Active Learning Queue: 8/30
+[12:57:42.837] [SAM]            🔮 Loading Segment Anything (SAM): sam_b.pt
+[12:57:42.851] [Manual]         ➕ Manual box added: bottle at [368.3, 3.2, 609.3, 793.1]
+[12:57:42.851] [Manual]         💾 Label saved successfully: 1 boxes for 36646-6-dasani-water-bottle.png
+[12:57:42.851] [Orchestrator]   ⏹️  Shutting down training orchestrator...
+[12:57:42.851] [Orchestrator]   ✅ Training orchestrator shutdown complete
+[12:57:42.851] Unstructured test output without prefix
