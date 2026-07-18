@@ -153,8 +153,7 @@ als --start
   - `Plain JSON` -> writes `labels.json`
 - The app also keeps internal state in `.labels_internal.json` and autosave in `labels_autosave.json` inside the selected folder.
 
-![Folder Selection](./images/folder_selection.png)
-![Format Selection](./images/format_selection.png)
+
 
 ### 2. Select classes
 
@@ -162,7 +161,7 @@ als --start
 - Pick one or more classes.
 - Add custom classes from the same dialog when needed.
 
-![Class Selection](./images/class_selection.png)
+
 
 ### 3. Start labeling
 
@@ -175,11 +174,9 @@ als --start
   - `Manual (M)`
   - `Log`
 
-![Active Learning Options](./images/active_learning_options.png)
-
 ### 4. Manual mode (box drawing)
 
-![Normal GUI](./images/normal_full_gui.png)
+
 
 - Draw boxes by click-drag on canvas.
 - Switch to `Freehand Region` in the manual toolbox to draw polygon regions.
@@ -193,7 +190,7 @@ als --start
   - `Delete` -> delete last box
   - `1..9` -> switch class index
 
-![Manual Labelling](./images/manual_labelling.png)
+
 
 ### 5. Monitor active learning and training
 
@@ -203,7 +200,7 @@ als --start
   - training progress/status.
 - Use `Force Retrain` if you want to bypass normal policy checks (still requires minimum samples).
 
-![Dataset Statistics](./images/dataset_stats.png)
+
 
 ### 6. Version and promote
 
@@ -219,6 +216,13 @@ For each selected image folder:
 - `.labels_internal.json` (internal metadata store)
 - `labels_autosave.json` (session recovery)
 
+---
+## Future updates
+- sam intergration
+- gpu paralle processing
+- ocr text labelling
+- videos labelling
+
 ## Notes
 
 - If Ray is unavailable, labeling still works; background training features are reduced.
@@ -228,6 +232,7 @@ For each selected image folder:
 ## Contributing
 
 Please read `CONTRIBUTING.md`.
+
 
 ## License
 
