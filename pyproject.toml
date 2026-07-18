@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Active-Labeling-System"
-version = "0.2.0"
-description = "Active Labeling System v2 with PyQt6, YOLO active learning, and optional SAM-assisted labels."
+version = "0.2.1"
+description = "Active Labeling System v2 with PyQt6, YOLO active learning, and manual labeling tools."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
   { name = "sairam-s0" }
 ]
-keywords = ["labeling", "computer-vision", "active-learning", "yolo", "sam", "pyqt6"]
+keywords = ["labeling", "computer-vision", "active-learning", "yolo", "pyqt6"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
