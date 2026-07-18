@@ -105,7 +105,7 @@ class SmartLabelingApp:
         state.has_gpu = utils.detect_gpu()
         state.device = "cuda" if state.has_gpu else "cpu"
 
-        self.data_manager = DataManager("labels.json")
+        self.data_manager = DataManager(ROOT / "labels.json")
         self.replay_buffer = ReplayBuffer(max_size=200)
         self.model_manager = ModelManager("models", base_model_name=state.weights)
         state.weights = self.model_manager.resolve_active_path()
@@ -137,7 +137,7 @@ class SmartLabelingApp:
             perf_delta_threshold=0.05,
             entropy_shift_threshold=0.15,
         )
-        self.dataset_versioner = DatasetVersioner("datasets")
+        self.dataset_versioner = DatasetVersioner(ROOT / "datasets")
         self._monitor_started = False
 
         self.init_worker()
@@ -292,33 +292,46 @@ class SmartLabelingApp:
         except Exception as exc:
             print(f"[persist_labels] failed: {exc}")
 
-    def process_next(self):
+    def process_next(self, direction=1):
+        if state.current_index < 0:
+            state.current_index = 0
+            QMessageBox.information(self.window, "Start", "This is the first image.")
+            return
+
         if state.current_index >= len(state.image_files):
             QMessageBox.information(self.window, "Complete", f"All {len(state.image_files)} images processed.")
+            state.current_index = len(state.image_files) - 1
             return
 
         img_path = state.image_files[state.current_index]
-        if img_path in state.labels:
-            state.current_index += 1
-            QTimer.singleShot(0, self.process_next)
-            return
 
         try:
             utils.safe_close_image(state.current_image)
             state.current_image = utils.load_image(img_path)
             state.current_image_path = img_path
             state._current_img_size = state.current_image.size
-            self.window.display_image([])
             filename = Path(img_path).name
             if hasattr(self.window.bottom_bar, "filename_label"):
                 self.window.bottom_bar.filename_label.setText(filename[:40])
             self.window.update_stats()
             self.manual.on_image_changed()
-            self.run_detect(img_path)
+            
+            if hasattr(self.window, "reset_entropy_display"):
+                self.window.reset_entropy_display()
+            
+            # If already labeled, load the saved detections
+            if img_path in state.labels:
+                saved_data = state.labels[img_path]
+                detections = saved_data.get('detections', [])
+                state.last_image_entropy = saved_data.get('entropy', 0.0)
+                self.window.result_ready.emit(detections)
+            else:
+                self.window.display_image([])
+                self.run_detect(img_path)
         except Exception as exc:
             print(f"[Error] Loading {img_path}: {exc}")
-            state.current_index += 1
-            QTimer.singleShot(0, self.process_next)
+            state.current_index += direction
+            QTimer.singleShot(0, lambda: self.process_next(direction))
 
     def run_detect(self, img_path):
         def worker_thread():

@@ -1,11 +1,102 @@
-[12:57:42.837] --- Printing AFTER setting up clean logging ---
-[12:57:42.837] [DataManager]    📥 Queued image for training: 31Oc3kJvxaL_2_11zon.jpeg (Queue: 8/30)
-[12:57:42.837] [DataManager]    🏷️  Class mapping updated: {'bottle': 0}
-[12:57:42.837] [ReplayBuffer]   🔄 Replay Buffer: Added 1 sample(s) (Total: 8)
-[12:57:42.837] [AL]             🚀 Active Learning Queue: 8/30
-[12:57:42.837] [SAM]            🔮 Loading Segment Anything (SAM): sam_b.pt
-[12:57:42.851] [Manual]         ➕ Manual box added: bottle at [368.3, 3.2, 609.3, 793.1]
-[12:57:42.851] [Manual]         💾 Label saved successfully: 1 boxes for 36646-6-dasani-water-bottle.png
-[12:57:42.851] [Orchestrator]   ⏹️  Shutting down training orchestrator...
-[12:57:42.851] [Orchestrator]   ✅ Training orchestrator shutdown complete
-[12:57:42.851] Unstructured test output without prefix
+[15:49:54.452] [DataManager]    Class mapping updated: {'cup': 0, 'person': 1, 'water_bottle': 2}
+[15:49:54.587] [Model]          Loaded COCO database classes: 80 class names.
+[15:49:55.264] [Worker]         Inference worker ready: models\active_model.pt
+[15:51:28.533] [Manual]         Starting manual mode with classes: ['bottle']
+[15:51:43.847] [Manual]         Manual box added: bottle at [259.1, 113.5, 672.7, 1111.2]
+[15:51:45.335] [DataManager]    Queued image for training: -on-white-background-transparent-plastic-pet-bottle-of-mineral-water-2DA55DY_85_11zon.jpeg (Queue: 1/30)
+[15:51:45.345] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:51:45.347] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 1)
+[15:51:45.349] [AL]             Active Learning Queue: 1/30
+[15:51:45.352] [Manual]         Label saved successfully: 1 boxes for -on-white-background-transparent-plastic-pet-bottle-of-mineral-water-2DA55DY_85_11zon.jpeg
+[15:51:45.942] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:51:46.925] [DataManager]    Queued image for training: 01-waterbottlesun_20190719_0023_2x3_1_11zon.jpeg (Queue: 2/30)
+[15:51:46.925] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:51:46.928] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 2)
+[15:51:46.930] [AL]             Active Learning Queue: 2/30
+[15:51:49.366] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:52:08.047] [DataManager]    Queued image for training: 0bnC0a9OdzJtymklrmne_1_11zon.jpeg (Queue: 3/30)
+[15:52:08.047] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:52:08.050] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 3)
+[15:52:08.053] [AL]             Active Learning Queue: 3/30
+[15:52:08.480] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:52:09.082] [DataManager]    Queued image for training: 1-0l-fresh-water-bottle-mockup_358694-280_3_11zon.jpeg (Queue: 4/30)
+[15:52:09.083] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:52:09.084] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 4)
+[15:52:09.086] [AL]             Active Learning Queue: 4/30
+[15:52:26.138] [Manual]         Manual box added: bottle at [345.6, 80.5, 631.5, 914.0]
+[15:52:27.043] [DataManager]    Queued image for training: 1000_F_181641215_ZAQ5NSDRONequztAW4ipiNfPlyuEa3s0_19_11zon.jpeg (Queue: 5/30)
+[15:52:27.044] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:52:27.047] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 5)
+[15:52:27.049] [AL]             Active Learning Queue: 5/30
+[15:52:27.052] [Manual]         Label saved successfully: 1 boxes for 1000_F_181641215_ZAQ5NSDRONequztAW4ipiNfPlyuEa3s0_19_11zon.jpeg
+[15:52:27.479] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:52:28.117] [DataManager]    Queued image for training: 1000_F_251350383_qpgK1Q0u3nBLak8CjH7rENWlY7NRbLwI_21_11zon.jpeg (Queue: 6/30)
+[15:52:28.119] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:52:28.120] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 6)
+[15:52:28.123] [AL]             Active Learning Queue: 6/30
+[15:52:30.519] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:52:31.187] [DataManager]    Queued image for training: 1000_F_294537209_JaQefXgA0A6O37NfDHTib6zROQcHT9Jd_22_11zon.jpeg (Queue: 7/30)
+[15:52:31.187] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:52:31.191] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 7)
+[15:52:31.196] [AL]             Active Learning Queue: 7/30
+[15:52:55.241] [Manual]         Region added: bottle with 11 points
+[15:52:57.166] [DataManager]    Queued image for training: 108-1086053_transparent-background-water-bottle-png-png-download.png (Queue: 8/30)
+[15:52:57.167] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:52:57.170] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 8)
+[15:52:57.173] [AL]             Active Learning Queue: 8/30
+[15:52:57.181] [Manual]         Label saved successfully: 1 boxes for 108-1086053_transparent-background-water-bottle-png-png-download.png
+[15:53:08.214] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:53:08.825] [DataManager]    Queued image for training: 11526496-two-blue-transparent-bottle-with-water-isolated-on-a-white-background_31_11zon.jpeg (Queue: 9/30)
+[15:53:08.826] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:53:08.829] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 9)
+[15:53:08.833] [AL]             Active Learning Queue: 9/30
+[15:53:11.268] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:53:11.874] [DataManager]    Queued image for training: 137-1370739_water-bottle-png-image-file-plastic-bottle-transparent.png (Queue: 10/30)
+[15:53:11.883] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:53:11.887] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 10)
+[15:53:11.892] [AL]             Active Learning Queue: 10/30
+[15:53:29.656] [Manual]         Manual box added: bottle at [203.6, 50.4, 729.3, 854.3]
+[15:53:33.752] [DataManager]    Queued image for training: 148-1488904_transparent-raindrop-water-bottle-water-jug-transparent-background.png (Queue: 11/30)
+[15:53:33.752] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:53:33.756] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 11)
+[15:53:33.760] [AL]             Active Learning Queue: 11/30
+[15:53:33.762] [Manual]         Label saved successfully: 1 boxes for 148-1488904_transparent-raindrop-water-bottle-water-jug-transparent-background.png
+[15:53:49.191] [Manual]         Manual box added: bottle at [81.8, 24.5, 787.2, 895.6]
+[15:53:50.145] [DataManager]    Queued image for training: 174367-2_2-bisleri-mineral-water_41_11zon.jpeg (Queue: 12/30)
+[15:53:50.145] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:53:50.149] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 12)
+[15:53:50.152] [AL]             Active Learning Queue: 12/30
+[15:53:50.154] [Manual]         Label saved successfully: 1 boxes for 174367-2_2-bisleri-mineral-water_41_11zon.jpeg
+[15:53:51.700] [DataManager]    Queued image for training: 193-1932341_bottled-water-transparent-background-water-bottle-png-png.png (Queue: 13/30)
+[15:53:51.700] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:53:51.704] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 13)
+[15:53:51.708] [AL]             Active Learning Queue: 13/30
+[15:53:51.711] [Manual]         Label saved successfully: 0 boxes for 193-1932341_bottled-water-transparent-background-water-bottle-png-png.png
+[15:53:52.277] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:53:52.897] [DataManager]    Queued image for training: 197351_4-bisleri-mineral-water_42_11zon.jpeg (Queue: 14/30)
+[15:53:52.898] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:53:52.901] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 14)
+[15:53:52.906] [AL]             Active Learning Queue: 14/30
+[15:53:55.222] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:53:55.843] [DataManager]    Queued image for training: 1m53DFql9XibM41BUVHW_4_11zon.jpeg (Queue: 15/30)
+[15:53:55.845] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:53:55.847] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 15)
+[15:53:55.854] [AL]             Active Learning Queue: 15/30
+[15:53:58.560] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:53:59.322] [DataManager]    Queued image for training: 2008_0622SzentkirC3A1ly0110.JPG_24_11zon.jpeg (Queue: 16/30)
+[15:53:59.322] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:53:59.325] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 16)
+[15:53:59.328] [AL]             Active Learning Queue: 16/30
+[15:54:01.917] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:54:02.660] [DataManager]    Queued image for training: 2008_0622SzentkirC3A1ly0110.JPG_24_11zon_1_11zon.jpeg (Queue: 17/30)
+[15:54:02.663] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:54:02.666] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 17)
+[15:54:02.669] [AL]             Active Learning Queue: 17/30
+[15:54:05.238] [SAM]            Loading Segment Anything (SAM): sam_b.pt
+[15:54:05.915] [DataManager]    Queued image for training: 200ml-plastic-mineral-water-bottle-500x500_12_11zon.jpeg (Queue: 18/30)
+[15:54:05.915] [DataManager]    Class mapping updated: {'bottle': 0}
+[15:54:05.918] [ReplayBuffer]   Replay Buffer: Added 1 sample(s) (Total: 18)
+[15:54:05.922] [AL]             Active Learning Queue: 18/30
+[15:54:11.280] [Manual]         Exited manual labeling mode
+[15:54:17.194] [Orchestrator]   Shutting down training orchestrator
+[15:54:17.195] [Orchestrator]   Training orchestrator shutdown complete

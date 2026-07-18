@@ -15,7 +15,6 @@ from features.toolbar_manager import ToolbarManager
 
 
 from app.theme import COLORS
-from core.sam_adapter import segment_boxes, segment_point
 
 
 def default_color_for_name(name: str) -> str:
@@ -183,8 +182,7 @@ class ManualToolbox(QDialog):
             "2. Box: click & drag\n"
             "3. Freehand Region: click points, double-click to close\n"
             "   (Backspace / Ctrl+Z to undo points)\n"
-            "4. SAM: click object to add detections\n"
-            "5. Click Done to save all"
+            "4. Click Done to save all"
         )
         info.setStyleSheet(f"""
             QLabel {{
@@ -225,9 +223,8 @@ class ManualToolbox(QDialog):
         self.mode_group = QButtonGroup(self)
         box_mode = QRadioButton("Box")
         region_mode = QRadioButton("Freehand Region")
-        sam_mode = QRadioButton("SAM Click")
         box_mode.setChecked(True)
-        for idx, radio in enumerate((box_mode, region_mode, sam_mode)):
+        for idx, radio in enumerate((box_mode, region_mode)):
             radio.setStyleSheet(f"color: {COLORS['text']}; font-size: 11px; font-weight: bold;")
             self.mode_group.addButton(radio, idx)
             mode_layout.addWidget(radio)
@@ -442,8 +439,6 @@ class ManualToolbox(QDialog):
         text = button.text()
         if text.startswith("Freehand"):
             return "polygon"
-        if text.startswith("SAM"):
-            return "sam"
         return "box"
 
     def _on_highlight_toggled(self, checked):
@@ -500,7 +495,9 @@ class ManualManager(QObject):
         self._active = True
         self._event_filter_disabled = False  # re enable
         self._manual_boxes = []
-        self._box_history = []
+        for det in getattr(self.state, "current_detections", []) or []:
+            self._manual_boxes.append(dict(det))
+        self._box_history = [box.copy() for box in self._manual_boxes]
         self._start_point = None
         self._polygon_points = []
         self._manual_mode = "box"
@@ -542,6 +539,7 @@ class ManualManager(QObject):
             return
         
         print(f"[Manual] Starting manual mode with classes: {self.state.selected_classes}")
+        self._redraw_with_boxes()
     
     def exit_manual_mode(self):
         if not self._active:
@@ -608,7 +606,7 @@ class ManualManager(QObject):
                 pass
 
     def _set_manual_mode(self, mode: str):
-        if mode not in {"box", "polygon", "sam"}:
+        if mode not in {"box", "polygon"}:
             return
         if self._manual_mode == "polygon" and self._polygon_points:
             self._finish_polygon_region()
@@ -731,11 +729,7 @@ class ManualManager(QObject):
         if img_x is None:
             return
 
-        if self._manual_mode == "sam":
-            if event.button() == Qt.MouseButton.LeftButton:
-                img_x, img_y = self._clamp_image_point(img_x, img_y)
-                self._add_sam_matches_at_point(img_x, img_y)
-            return
+
 
         if self._manual_mode == "polygon":
             if event.button() == Qt.MouseButton.RightButton:
@@ -756,7 +750,7 @@ class ManualManager(QObject):
         self._start_point = (img_x, img_y)
     
     def _on_mouse_move(self, event):
-        if self._manual_mode in {"polygon", "sam"}:
+        if self._manual_mode == "polygon":
             return
 
         if not self._start_point or not self._overlay:
@@ -814,7 +808,7 @@ class ManualManager(QObject):
             self._overlay = None
     
     def _on_mouse_release(self, event):
-        if self._manual_mode in {"polygon", "sam"}:
+        if self._manual_mode == "polygon":
             return
 
         if not self._start_point:
@@ -952,53 +946,6 @@ class ManualManager(QObject):
 
         self._redraw_with_boxes()
 
-    def _add_sam_matches_at_point(self, img_x, img_y):
-        img_path = str(self.state.current_image_path)
-        cls_name = safe_class_name(self._current_manual_class or "manual")
-        detections = list(getattr(self.state, "current_detections", []) or [])
-        clicked = self._find_detection_at_point(detections, img_x, img_y)
-
-        if clicked:
-            clicked_class = clicked.get("class")
-            if clicked_class:
-                cls_name = safe_class_name(clicked_class)
-            candidates = [
-                det for det in detections
-                if det.get("class") == clicked.get("class") and self._valid_bbox(det.get("bbox"))
-            ]
-            if not candidates:
-                candidates = [clicked]
-
-            segmented = segment_boxes(img_path, [dict(det) for det in candidates])
-            added = 0
-            for det in segmented:
-                item = self._manual_item_from_detection(det, cls_name, "sam_similar")
-                if item and not self._has_similar_manual_shape(item["bbox"], cls_name):
-                    self._manual_boxes.append(item)
-                    self._box_history.append(item.copy())
-                    added += 1
-            print(f"[Manual] SAM added {added} similar {cls_name} object(s)")
-        else:
-            result = segment_point(img_path, img_x, img_y)
-            if not result:
-                QMessageBox.information(
-                    self.window,
-                    "SAM",
-                    "SAM could not segment that click. Try clicking closer to the center of the object."
-                )
-                return
-            item = self._manual_item_from_detection(result, cls_name, "sam_point")
-            if item:
-                self._manual_boxes.append(item)
-                self._box_history.append(item.copy())
-                print(f"[Manual] SAM point region added: {cls_name}")
-
-        if self._toolbox:
-            try:
-                self._toolbox.update_box_count(len(self._manual_boxes))
-            except RuntimeError:
-                self._toolbox = None
-        self._redraw_with_boxes()
 
     def _find_detection_at_point(self, detections, img_x, img_y):
         matches = []
@@ -1163,18 +1110,11 @@ class ManualManager(QObject):
         if self.toolbar:
             self.toolbar.hide()
         self._box_history = []
-
-        if not self._manual_boxes:
-            print("[Manual] No boxes to save, advancing to next image")
-            self.host.current_index += 1
-            self.host.process_next()
-            self.on_image_changed()
-            return
         
         # save to
         img_path = str(self.state.current_image_path)
         entry = self.host.labels.get(img_path, {})
-        dets = entry.get('detections', [])
+        dets = []
         
         box_count = 0
         for box in self._manual_boxes:
@@ -1182,14 +1122,14 @@ class ManualManager(QObject):
                 cls_name = safe_class_name(box.get("class", "manual"))
                 det = {
                     'bbox': [float(v) for v in box.get("bbox", [0, 0, 0, 0])],
-                    'confidence': 100.0,
+                    'confidence': float(box.get('confidence', 100.0)),
                     'class': cls_name,
                     'manual': True,
-                    'shape': 'polygon',
+                    'shape': box.get('shape', 'box'),
                 }
                 if box.get("segmentation"):
                     det['segmentation'] = box["segmentation"]
-                    det['mask_source'] = 'manual'
+                    det['mask_source'] = box.get('mask_source', 'manual')
                 dets.append(det)
                 box_count += 1
                 continue

@@ -239,14 +239,6 @@ class RetrainingPolicy:
         return np.mean(all_confs) if all_confs else 0.5
     
     def force_retrain(self) -> Tuple[bool, Dict]:
-        sample_trigger, sample_info = self._check_sample_threshold()
-        
-        if not sample_trigger:
-            return False, {
-                'error': 'Insufficient samples for training',
-                'info': sample_info
-            }
-        
         return True, {
             'status': 'forced_retrain',
             'bypassed_policies': True

@@ -5,36 +5,12 @@ import re
 from pathlib import Path
 from datetime import datetime
 
-# Safe fallbacks for emojis when printing to terminals with limited encoding (like CP1252 on Windows)
-EMOJI_FALLBACKS = {
-    "📥": "[IN]",
-    "🏷️": "[MAP]",
-    "🔄": "[BUF]",
-    "🚀": "[AL]",
-    "🔮": "[SAM]",
-    "🎯": "[SAM]",
-    "➕": "[ADD]",
-    "💾": "[SAVE]",
-    "🚪": "[EXIT]",
-    "⏹️": "[STOP]",
-    "✅": "[OK]",
-    "💎": "[RAY]",
-    "⚙️": "[RUN]",
-    "✨": "[OK]",
-    "📈": "[STAT]",
-    "👑": "[PROM]",
-    "🎉": "[OK]",
-    "🤖": "[WORK]",
-    "📚": "[LOAD]",
-    "➜": "->"
-}
-
 class CleanLogStream:
     """A stream wrapper that filters, formats, and redirects stdout/stderr.
     
     It removes error tracebacks and failed/skipped statuses (disadvantages),
-    formats background operations cleanly with emojis/colors, cleans messy paths,
-    and writes the output to both the console and a plain-text logs file.
+    formats background operations cleanly with structured text (no emojis),
+    cleans messy paths, and writes the output to both the console and a plain-text logs file.
     """
     def __init__(self, original_stream, log_file_path):
         self.original_stream = original_stream
@@ -68,28 +44,20 @@ class CleanLogStream:
         self.log_file.flush()
 
     def _safe_write_to_original(self, text):
-        """Safely writes text to the original stream, degrading gracefully on encoding errors."""
+        """Safely writes text to the original stream."""
         try:
             self.original_stream.write(text)
-        except UnicodeEncodeError:
-            # Replace emojis with text fallbacks
-            safe_text = text
-            for emoji, fallback in EMOJI_FALLBACKS.items():
-                safe_text = safe_text.replace(emoji, fallback)
-            try:
-                self.original_stream.write(safe_text)
-            except Exception:
-                # Ultimate fallback: replace unknown characters with fallback question marks/representations
-                enc = getattr(self.original_stream, "encoding", "ascii") or "ascii"
-                encoded = safe_text.encode(enc, errors="replace")
-                self.original_stream.write(encoded.decode(enc))
+        except Exception:
+            enc = getattr(self.original_stream, "encoding", "ascii") or "ascii"
+            encoded = text.encode(enc, errors="replace")
+            self.original_stream.write(encoded.decode(enc))
 
     def process_line(self, line):
         line = line.rstrip("\r")
         raw_line = self.ansi_escape.sub('', line)
         
         if not raw_line.strip():
-            # Empty/whitespace line, output a clean newline to original stdout but skip log file clutter
+            # Empty/whitespace line, output a clean newline to original stdout
             self._safe_write_to_original("\n")
             return
 
@@ -113,7 +81,7 @@ class CleanLogStream:
             # Clean any Windows absolute paths inside the message to keep them clean
             message = self.win_path_pattern.sub(lambda m: Path(m.group(0)).name, message)
 
-            # Mapping for premium/professional log formatting
+            # Mapping for premium/professional log formatting (Text only, no emojis)
             formatted = None
             if prefix == "DataManager":
                 if "Queued for training" in message:
@@ -121,78 +89,78 @@ class CleanLogStream:
                     q_size = q_match.group(1) if q_match else "?"
                     img_match = re.search(r"Queued for training:\s*([^\s\(\)]+)", message)
                     img_name = img_match.group(1) if img_match else "image"
-                    formatted = f"📥 Queued image for training: {img_name} (Queue: {q_size}/30)"
+                    formatted = f"Queued image for training: {img_name} (Queue: {q_size}/30)"
                 elif "Class mapping updated" in message:
                     mapping = message.replace("Class mapping updated:", "").strip()
-                    formatted = f"🏷️  Class mapping updated: {mapping}"
+                    formatted = f"Class mapping updated: {mapping}"
             elif prefix == "ReplayBuffer":
                 if "Added" in message:
                     s_match = re.search(r"Added\s*(\d+)\s*samples,\s*total:\s*(\d+)", message)
                     if s_match:
                         added, total = s_match.groups()
-                        formatted = f"🔄 Replay Buffer: Added {added} sample(s) (Total: {total})"
+                        formatted = f"Replay Buffer: Added {added} sample(s) (Total: {total})"
                 elif "Cleared" in message:
-                    formatted = "🧹 Replay Buffer cleared"
+                    formatted = "Replay Buffer cleared"
                 elif "Pruned" in message:
-                    formatted = f"✂️  Replay Buffer pruned: {message.replace('Pruned', '').strip()}"
+                    formatted = f"Replay Buffer pruned: {message.replace('Pruned', '').strip()}"
                 elif "Removed" in message:
-                    formatted = f"🗑️  Replay Buffer cleaned: {message.replace('Removed', '').strip()}"
+                    formatted = f"Replay Buffer cleaned: {message.replace('Removed', '').strip()}"
             elif prefix == "AL":
                 if "Training queue:" in message:
-                    formatted = f"🚀 Active Learning Queue: {message.replace('Training queue:', '').strip()}"
+                    formatted = f"Active Learning Queue: {message.replace('Training queue:', '').strip()}"
                 elif "Queue reached" in message:
-                    formatted = "⚡ Queue threshold reached - triggering background training!"
+                    formatted = "Queue threshold reached - triggering background training"
                 elif "Training complete!" in message:
                     details = message.replace("Training complete!", "").strip()
-                    formatted = f"🎉 Shadow model training complete! {details}"
+                    formatted = f"Shadow model training complete! {details}"
                 elif "Auto-promoted" in message:
-                    formatted = "👑 Auto-promoted shadow model to production active weights"
+                    formatted = "Auto-promoted shadow model to production active weights"
             elif prefix == "SAM":
                 if "Loading model" in message:
                     model = message.replace("Loading model from:", "").strip()
-                    formatted = f"🔮 Loading Segment Anything (SAM): {model}"
+                    formatted = f"Loading Segment Anything (SAM): {model}"
                 elif "Point segmentation" in message:
-                    formatted = f"🎯 SAM Point segmentation prompt: {message.replace('Point segmentation at', '').strip()}"
+                    formatted = f"SAM Point segmentation prompt: {message.replace('Point segmentation at', '').strip()}"
             elif prefix == "Manual":
                 if "Box added" in message:
                     details = message.replace("Box added:", "").strip()
-                    formatted = f"➕ Manual box added: {details}"
+                    formatted = f"Manual box added: {details}"
                 elif "Saved" in message:
                     details = message.replace("Saved", "").strip()
-                    formatted = f"💾 Label saved successfully: {details}"
+                    formatted = f"Label saved successfully: {details}"
                 elif "Cleanup" in message:
-                    formatted = "🚪 Exited manual labeling mode"
+                    formatted = "Exited manual labeling mode"
             elif prefix == "Orchestrator":
                 if "Shutting down" in message:
-                    formatted = "⏹️  Shutting down training orchestrator..."
+                    formatted = "Shutting down training orchestrator"
                 elif "Shutdown complete" in message:
-                    formatted = "✅ Training orchestrator shutdown complete"
+                    formatted = "Training orchestrator shutdown complete"
                 elif "Ray initialized" in message:
-                    formatted = "💎 Ray cluster backend initialized successfully"
+                    formatted = "Ray cluster backend initialized successfully"
                 elif "Starting training" in message:
                     details = message.replace("Starting training:", "").strip()
-                    formatted = f"⚙️  Orchestrator starting training: {details}"
+                    formatted = f"Orchestrator starting training: {details}"
                 elif "Training completed" in message:
-                    formatted = "✨ Orchestrator shadow training completed successfully"
+                    formatted = "Orchestrator shadow training completed successfully"
                 elif "Trained on" in message:
-                    formatted = f"📈 Trained on: {message.replace('Trained on', '').strip()}"
+                    formatted = f"Trained on: {message.replace('Trained on', '').strip()}"
                 elif "Model saved" in message:
-                    formatted = f"💾 Saved model checkpoint: {message.replace('Model saved to:', '').strip()}"
+                    formatted = f"Saved model checkpoint: {message.replace('Model saved to:', '').strip()}"
                 elif "Shadow model promoted" in message:
-                    formatted = f"👑 Shadow model promoted: {message.replace('Shadow model promoted:', '').strip()}"
+                    formatted = f"Shadow model promoted: {message.replace('Shadow model promoted:', '').strip()}"
             elif prefix == "Worker":
                 if "Ready with model" in message:
-                    formatted = f"🤖 Inference worker ready: {message.replace('Ready with model:', '').strip()}"
+                    formatted = f"Inference worker ready: {message.replace('Ready with model:', '').strip()}"
                 elif "Reloading with new model" in message:
-                    formatted = f"🔄 Worker reloading new weights: {message.replace('Reloading with new model:', '').strip()}"
+                    formatted = f"Worker reloading new weights: {message.replace('Reloading with new model:', '').strip()}"
                 elif "Reloaded successfully with" in message:
-                    formatted = f"✅ Worker reloaded successfully: {message.replace('Reloaded successfully with:', '').strip()}"
+                    formatted = f"Worker reloaded successfully: {message.replace('Reloaded successfully with:', '').strip()}"
             elif prefix == "Model":
                 if "Loaded" in message:
-                    formatted = f"📚 Loaded COCO database classes: {message.replace('Loaded', '').strip()}"
+                    formatted = f"Loaded COCO database classes: {message.replace('Loaded', '').strip()}"
 
             if formatted is None:
-                formatted = f"➜ {message}"
+                formatted = message
 
             # Standardized padded prefix width
             aligned_prefix = f"[{prefix}]".ljust(16)

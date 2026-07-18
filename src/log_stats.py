@@ -311,7 +311,6 @@ def main():
     box_row(f"  {C.BOLD}Ray{C.RST}              {C.GRN}online{C.RST}  1 node  8 CPUs  1 GPU  "
             f"│  4 actors  │  ObjStore {C.BOLD}2.0{C.RST} GiB")
     box_row(f"  {C.BOLD}Base Model{C.RST}       yolov8m.pt  │  80 COCO classes  │  49.7 MB")
-    box_row(f"  {C.BOLD}SAM{C.RST}              sam_b.pt  │  {C.GRN}ready{C.RST}  │  segment_point + segment_boxes")
     box_row(f"  {C.BOLD}Framework{C.RST}        PyQt6 + Ultralytics 8.x + Ray 2.x")
     box_blank()
     box_bot()

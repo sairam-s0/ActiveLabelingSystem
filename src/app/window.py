@@ -4,7 +4,7 @@ from PIL import Image
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QLabel, QSlider, QFileDialog, QMessageBox, QFrame, QComboBox,
-    QDialog, QTextEdit, QSplitter
+    QDialog, QTextEdit, QSplitter, QScrollArea
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QSize
 from PyQt6.QtGui import QPixmap, QImage, QKeySequence, QShortcut, QFont
@@ -181,12 +181,27 @@ class LeftSidePanel(QFrame):
         super().__init__()
         self.setFixedWidth(280)
         self.setStyleSheet(f"background-color: {COLORS['panel']}; border-right: 2px solid {COLORS['border']};")
-        self._setup_ui()
+        
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
+        
+        container = QWidget()
+        container.setStyleSheet("background-color: transparent;")
+        
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(15, 15, 15, 15)
+        container_layout.setSpacing(12)
+        
+        self._setup_ui(container_layout)
+        
+        scroll.setWidget(container)
+        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll)
     
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(12)
+    def _setup_ui(self, layout):
         
         # active learn
         layout.addWidget(self._create_section_header(" Active Learning"))
@@ -242,21 +257,43 @@ class LeftSidePanel(QFrame):
         """)
         al_layout.addWidget(self.strategy_combo)
         
-        self.entropy_label = QLabel("Entropy: --")
-        self.entropy_label.setStyleSheet(f"color: {COLORS['warning']}; font-size: 12px; font-weight: bold;")
-        al_layout.addWidget(self.entropy_label)
+        # Live Entropy analysis sub-panel
+        self.entropy_panel = QFrame()
+        self.entropy_panel.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['panel']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 4px;
+                padding: 8px;
+            }}
+        """)
+        entropy_layout = QVBoxLayout(self.entropy_panel)
+        entropy_layout.setContentsMargins(6, 6, 6, 6)
+        entropy_layout.setSpacing(6)
+        
+        self.entropy_title = QLabel("📊 LIVE ENTROPY")
+        self.entropy_title.setStyleSheet(f"color: {COLORS['accent']}; font-size: 11px; font-weight: bold; border: none;")
+        entropy_layout.addWidget(self.entropy_title)
+        
+        self.entropy_value_label = QLabel("Value: --")
+        self.entropy_value_label.setStyleSheet(f"color: {COLORS['muted']}; font-size: 12px; font-weight: bold; border: none;")
+        entropy_layout.addWidget(self.entropy_value_label)
+        
+        self.entropy_formula = QLabel("H(x) = - ∑ P(x_i) log₂ P(x_i)")
+        self.entropy_formula.setStyleSheet(f"color: {COLORS['muted']}; font-size: 10px; font-family: monospace; border: none;")
+        entropy_layout.addWidget(self.entropy_formula)
+        
+        self.entropy_details = QLabel("Detections: 0\nMax Conf: --\nLive Calc: N/A")
+        self.entropy_details.setStyleSheet(f"color: {COLORS['text']}; font-size: 10px; font-family: monospace; border: none;")
+        self.entropy_details.setWordWrap(True)
+        entropy_layout.addWidget(self.entropy_details)
+        
+        al_layout.addWidget(self.entropy_panel)
         
         # queue status
         self.queue_label = QLabel("Queue: 0/30")
         self.queue_label.setStyleSheet(f"color: {COLORS['muted']}; font-size: 11px;")
         al_layout.addWidget(self.queue_label)
-
-        sam_ready = sam_available()
-        self.sam_label = QLabel("SAM: ready" if sam_ready else "SAM: optional")
-        self.sam_label.setStyleSheet(
-            f"color: {COLORS['accent'] if sam_ready else COLORS['muted']}; font-size: 11px;"
-        )
-        al_layout.addWidget(self.sam_label)
         
         layout.addWidget(al_panel)
         
@@ -396,6 +433,7 @@ class BottomActionBar(QFrame):
     skip_clicked = pyqtSignal()
     manual_clicked = pyqtSignal()
     log_clicked = pyqtSignal()
+    previous_clicked = pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -409,6 +447,7 @@ class BottomActionBar(QFrame):
         layout.setSpacing(10)
         
         buttons = [
+            ("Previous", "P", COLORS['accent'], self.previous_clicked),
             ("Accept", "A/Y", COLORS['success'], self.accept_clicked),
             ("Reject", "R/X", COLORS['danger'], self.reject_clicked),
             ("Skip", "N", COLORS['muted'], self.skip_clicked),
@@ -447,6 +486,8 @@ class MainWindow(QMainWindow):
     def __init__(self, app_context):
         super().__init__()
         self.app = app_context
+        self.entropy_hold_ms = 2000
+        self._entropy_rendered_at = None
         self.setWindowTitle("Active Labeling System v2")
         self.setGeometry(100, 100, 1400, 900)
         
@@ -517,6 +558,7 @@ class MainWindow(QMainWindow):
     
     def setup_shortcuts(self):
         shortcuts = [
+            ('p', self.previous),
             ('a', self.accept),
             ('r', self.reject),
             ('n', self.skip),
@@ -546,6 +588,7 @@ class MainWindow(QMainWindow):
         self.left_panel.promote_clicked.connect(self.promote_shadow_model)
         
         # connect bottom
+        self.bottom_bar.previous_clicked.connect(self.previous)
         self.bottom_bar.accept_clicked.connect(self.accept)
         self.bottom_bar.reject_clicked.connect(self.reject)
         self.bottom_bar.skip_clicked.connect(self.skip)
@@ -637,6 +680,21 @@ class MainWindow(QMainWindow):
         self.top_bar.progress_label.setText("Starting...")
         QTimer.singleShot(150, self.app.process_next)
     
+    def reset_entropy_display(self):
+        self._entropy_rendered_at = None
+        self.left_panel.entropy_value_label.setText("Value: --")
+        self.left_panel.entropy_value_label.setStyleSheet(
+            f"color: {COLORS['muted']}; font-size: 12px; font-weight: bold; border: none;"
+        )
+        self.left_panel.entropy_details.setText("Detections: 0\nMax Conf: --\nLive Calc: N/A")
+
+    def _advance_after_entropy_hold(self):
+        elapsed_ms = 0
+        if self._entropy_rendered_at is not None:
+            elapsed_ms = int((datetime.now() - self._entropy_rendered_at).total_seconds() * 1000)
+        delay_ms = max(0, self.entropy_hold_ms - elapsed_ms)
+        QTimer.singleShot(delay_ms, self.app.process_next)
+
     def handle_result(self, detections):
         state.current_detections = detections or []
         
@@ -647,13 +705,43 @@ class MainWindow(QMainWindow):
             state._current_img_size = (0, 0)
         
         # update entropy
-        if detections:
-            entropy = state.last_image_entropy
-            self.left_panel.entropy_label.setText(f"Entropy: {entropy:.3f}")
+        entropy = getattr(state, 'last_image_entropy', 0.0)
+        self.left_panel.entropy_value_label.setText(f"Value: {entropy:.4f}")
+        self._entropy_rendered_at = datetime.now()
+        if entropy == 0.0:
+            color = COLORS['muted']
+        else:
             color = COLORS['danger'] if entropy > 0.7 else COLORS['warning'] if entropy > 0.4 else COLORS['success']
-            self.left_panel.entropy_label.setStyleSheet(f"color: {color}; font-size: 12px; font-weight: bold;")
+        self.left_panel.entropy_value_label.setStyleSheet(f"color: {color}; font-size: 12px; font-weight: bold; border: none;")
+        
+        if detections:
+            max_conf = max((d.get('confidence', 0.0) for d in detections), default=0.0)
+            max_det = max(detections, key=lambda d: d.get('entropy', 0.0), default=None)
+            
+            if max_det:
+                cls_name = max_det.get('class', 'unknown')
+                conf = max_det.get('confidence', 0.0)
+                det_entropy = max_det.get('entropy', 0.0)
+                calc_str = f"Max Obj: {cls_name}\nMax Conf: {conf:.1f}%\nMax H: {det_entropy:.3f}"
+            else:
+                calc_str = "Max Obj: N/A"
+                
+            details_text = f"Detections: {len(detections)}\n{calc_str}\nLive Calc: -({max_conf/100:.2f}*log({max_conf/100:.2f}) + ...)"
+            self.left_panel.entropy_details.setText(details_text)
+        else:
+            self.left_panel.entropy_details.setText("Detections: 0\nMax Conf: --\nLive Calc: N/A")
         
         self.display_image(detections)
+        
+        # If the image is already labeled, we just display it and do not trigger auto-accept or advance.
+        if state.image_files and state.current_index < len(state.image_files):
+            img_path = str(state.image_files[state.current_index])
+            if img_path in state.labels:
+                self.top_bar.progress_label.setText("✓ Labeled")
+                self.top_bar.progress_label.setStyleSheet(
+                    f"color: {COLORS['success']}; font-size: 12px; font-weight: bold;"
+                )
+                return
         
         if detections:
             max_conf = max((d['confidence'] for d in detections), default=0.0)
@@ -669,7 +757,7 @@ class MainWindow(QMainWindow):
                     except Exception:
                         pass
                     
-                    QTimer.singleShot(50, self.app.process_next)
+                    self._advance_after_entropy_hold()
                     return
         
         self.top_bar.progress_label.setText("Review required")
@@ -762,6 +850,14 @@ class MainWindow(QMainWindow):
         self.update_stats()
     
     # action handlers
+    def previous(self):
+        state.current_index -= 1
+        self.top_bar.progress_label.setText("← Previous")
+        self.top_bar.progress_label.setStyleSheet(
+            f"color: {COLORS['accent']}; font-size: 12px; font-weight: bold;"
+        )
+        self.app.process_next(direction=-1)
+
     def accept(self):
         if state.current_detections:
             self.save_label(state.current_detections, auto=False)
@@ -848,7 +944,7 @@ Average Entropy: {replay_stats.get('avg_entropy', 0):.4f}
         text_edit.setReadOnly(True)
         text_edit.setStyleSheet(f"""
             QTextEdit {{
-                background-color: white;
+                background-color: {COLORS['panel']};
                 color: {COLORS['text']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 4px;
@@ -957,7 +1053,7 @@ Average Entropy: {replay_stats.get('avg_entropy', 0):.4f}
         text_edit.setReadOnly(True)
         text_edit.setStyleSheet(f"""
             QTextEdit {{
-                background-color: white;
+                background-color: {COLORS['panel']};
                 color: {COLORS['text']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 4px;
