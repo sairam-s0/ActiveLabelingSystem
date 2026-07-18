@@ -4,23 +4,28 @@ Formerly known as **LabelOps**.
 
 Local-first AI-assisted image labeling with active learning, manual box tools, background retraining, and dataset version snapshots.
 
-## What is new
+## New features and updates
 
-- Modular app structure (`src/app`, `src/core`, `src/features`) for cleaner maintenance.
-- Active learning image prioritization when loading folders (unlabeled images first, sorted by uncertainty).
-- Retraining policy engine with multi-signal checks (sample count, time, entropy shift, class balance, confidence drift).
-- Dataset versioning from UI with metadata, hash integrity, and manifest tracking.
-- Label format selection at folder load time: `COCO JSON` or `Plain JSON`.
-- Safer persistence:
+- **New Feature:** Freehand region labeling for polygon-style segmentation in manual mode.
+- **New Feature:** Manual toolbox mode switch between bounding boxes and freehand regions, with highlight toggling and point undo.
+- **New Feature:** Active learning strategy selector with `Uncertainty`, `Margin`, `Diversity`, and `Balanced` modes.
+- **New Feature:** Previous-image navigation and auto-accepted image log from the review bar.
+- **Update:** Modular app structure (`src/app`, `src/core`, `src/features`) for cleaner maintenance.
+- **Update:** Active learning image prioritization when loading folders (unlabeled images first, sorted by uncertainty).
+- **Update:** Retraining policy engine with multi-signal checks (sample count, time, entropy shift, class balance, confidence drift).
+- **Update:** Dataset versioning from UI with metadata, hash integrity, and manifest tracking.
+- **Update:** Label format selection at folder load time: `COCO JSON` or `Plain JSON`.
+- **Update:** Safer persistence:
   - autosave per folder (`labels_autosave.json`)
   - internal state store (`.labels_internal.json`)
   - atomic file writes for exports.
-- Improved manual labeling UX:
+- **Update:** Improved manual labeling UX:
   - floating toolbox
+  - box and freehand region modes
   - quick class switching (1-9)
-  - undo/delete shortcuts
+  - undo/delete/point-undo shortcuts
   - inline floating action toolbar.
-- Better training controls in UI:
+- **Update:** Better training controls in UI:
   - force retrain
   - live queue/training status
   - shadow model promotion with validation warning flow.
@@ -53,6 +58,7 @@ Local-first AI-assisted image labeling with active learning, manual box tools, b
 ### Manual labeling mode
 
 - Draw boxes directly on the canvas.
+- Draw freehand regions as polygon segmentations.
 - Per-box class assignment with deterministic class colors.
 - Save-and-next loop without leaving manual mode.
 
@@ -162,10 +168,12 @@ als --start
 
 - Click `START`.
 - Review detections and use bottom actions:
+  - `Previous (P)`
   - `Accept (A)`
   - `Reject (R)`
   - `Skip (N)`
   - `Manual (M)`
+  - `Log`
 
 ![Active Learning Options](./images/active_learning_options.png)
 
@@ -174,10 +182,14 @@ als --start
 ![Normal GUI](./images/normal_full_gui.png)
 
 - Draw boxes by click-drag on canvas.
+- Switch to `Freehand Region` in the manual toolbox to draw polygon regions.
+- In freehand mode, click points to build a region, then double-click, right-click, or click `Finish Region` to close it.
+- Use `Highlight On/Off` to control shape fill visibility while editing.
 - Save boxes and move next with:
   - `Space` or `Enter` -> save and next
   - `Esc` -> exit manual mode
   - `Ctrl+Z` -> undo last box
+  - `Backspace` -> undo last freehand point
   - `Delete` -> delete last box
   - `1..9` -> switch class index
 
