@@ -1,239 +1,353 @@
-# ActiveLabelingSystem
+<div align="center">
 
-Formerly known as **LabelOps**.
+<img src="images/Logo.svg" alt="Active Labeling System" width="120" />
 
-Local-first AI-assisted image labeling with active learning, manual box tools, background retraining, and dataset version snapshots.
+# Active Labeling System
 
-## New features and updates
+**Local-first AI-assisted image labeling with active learning, background retraining, and dataset version snapshots.**
 
-- **New Feature:** Freehand region labeling for polygon-style segmentation in manual mode.
-- **New Feature:** Manual toolbox mode switch between bounding boxes and freehand regions, with highlight toggling and point undo.
-- **New Feature:** Active learning strategy selector with `Uncertainty`, `Margin`, `Diversity`, and `Balanced` modes.
-- **New Feature:** Previous-image navigation and auto-accepted image log from the review bar.
-- **Update:** Modular app structure (`src/app`, `src/core`, `src/features`) for cleaner maintenance.
-- **Update:** Active learning image prioritization when loading folders (unlabeled images first, sorted by uncertainty).
-- **Update:** Retraining policy engine with multi-signal checks (sample count, time, entropy shift, class balance, confidence drift).
-- **Update:** Dataset versioning from UI with metadata, hash integrity, and manifest tracking.
-- **Update:** Label format selection at folder load time: `COCO JSON` or `Plain JSON`.
-- **Update:** Safer persistence:
-  - autosave per folder (`labels_autosave.json`)
-  - internal state store (`.labels_internal.json`)
-  - atomic file writes for exports.
-- **Update:** Improved manual labeling UX:
-  - floating toolbox
-  - box and freehand region modes
-  - quick class switching (1-9)
-  - undo/delete/point-undo shortcuts
-  - inline floating action toolbar.
-- **Update:** Better training controls in UI:
-  - force retrain
-  - live queue/training status
-  - shadow model promotion with validation warning flow.
+Formerly known as **LabelOps**
 
-## Features
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PyQt6](https://img.shields.io/badge/PyQt6-Desktop_GUI-41CD52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
+[![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-00FFFF?style=for-the-badge&logo=yolo&logoColor=black)](https://docs.ultralytics.com/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
 
-### Active learning and triage
+[![PyPI Version](https://img.shields.io/pypi/v/Active-Labeling-System?style=flat-square&logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/Active-Labeling-System/)
+[![Azure Pipelines](https://img.shields.io/azure-devops/build/sairam-s0/ActiveLabelingSystem/1?style=flat-square&logo=azure-pipelines&label=Build)](https://dev.azure.com/sairam-s0/ActiveLabelingSystem)
+[![GitHub Issues](https://img.shields.io/github/issues/sairam-s0/ActiveLabelingSystem?style=flat-square&logo=github&label=Issues)](https://github.com/sairam-s0/ActiveLabelingSystem/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/sairam-s0/ActiveLabelingSystem?style=flat-square&logo=github&label=Stars)](https://github.com/sairam-s0/ActiveLabelingSystem)
 
-- Entropy-aware detection metadata is attached to predictions.
-- Folder loading prioritizes unlabeled images for high-value review.
-- Replay buffer preserves historical samples for continual learning.
+---
 
-### Retraining workflow
+[Installation](#installation) &nbsp;&bull;&nbsp; [Quick Start](#quick-start) &nbsp;&bull;&nbsp; [Usage Guide](#usage-guide) &nbsp;&bull;&nbsp; [Architecture](#project-architecture) &nbsp;&bull;&nbsp; [Contributing](#contributing)
 
-- Background training via Ray shadow trainer.
-- Training trigger policy requires minimum sample count plus at least one urgency signal.
-- Promotion flow supports validation and explicit override confirmation.
+</div>
 
-### Dataset versioning
+<br/>
 
-- Create version snapshots from current labels.
-- Stores YOLO-style labels, copied images, metadata, and a dataset hash.
-- Keeps lineage and latest pointer in `src/datasets/manifest.json`.
+## Overview
 
-### Label export
+Active Labeling System is a desktop application for AI-assisted image labeling that combines YOLO-based object detection with active learning strategies. It prioritizes the most informative images for human review, supports manual bounding box and freehand polygon annotation, and retrains models in the background -- all without requiring cloud connectivity.
 
-- `Plain JSON` output (`labels.json`) for direct app consumption.
-- `COCO JSON` output (`labels_coco.json`) for downstream ML pipelines.
+<div align="center">
+  <img src="images/normal_full_gui.png" alt="Application Interface" width="780" />
+  <br/>
+  <sub>Full application interface with detection overlay, review controls, and training status panel.</sub>
+</div>
 
-### Manual labeling mode
+<br/>
 
-- Draw boxes directly on the canvas.
-- Draw freehand regions as polygon segmentations.
-- Per-box class assignment with deterministic class colors.
-- Save-and-next loop without leaving manual mode.
+## Key Features
 
-## Project structure
+<table>
+  <tr>
+    <td width="50%">
+      <h3>Active Learning and Triage</h3>
+      <ul>
+        <li>Entropy-aware detection metadata attached to predictions</li>
+        <li>Folder loading prioritizes unlabeled images for high-value review</li>
+        <li>Strategy selector: <code>Uncertainty</code>, <code>Margin</code>, <code>Diversity</code>, <code>Balanced</code></li>
+        <li>Replay buffer preserves historical samples for continual learning</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>Background Retraining</h3>
+      <ul>
+        <li>Background training via Ray shadow trainer</li>
+        <li>Multi-signal policy: sample count, time, entropy shift, class balance, confidence drift</li>
+        <li>Shadow model promotion with validation warning flow</li>
+        <li>Force retrain override from UI</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>Manual Annotation</h3>
+      <ul>
+        <li>Bounding box drawing by click-drag on canvas</li>
+        <li>Freehand polygon regions for segmentation</li>
+        <li>Per-box class assignment with deterministic colors</li>
+        <li>Floating toolbox with mode switching and highlight toggle</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>Dataset Management</h3>
+      <ul>
+        <li>Version snapshots with YOLO-style labels, images, and metadata</li>
+        <li>Hash integrity verification and manifest tracking</li>
+        <li>Export as <code>COCO JSON</code> or <code>Plain JSON</code></li>
+        <li>Atomic file writes, autosave, and internal state persistence</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
-```text
-ActiveLabelingSystem/
-  images/
-  src/
-    app/
-      window.py
-      dialogs.py
-      state.py
-      actions.py
-    core/
-      data_manager.py
-      entropy.py
-      sample_selector.py
-      retrain_policy.py
-      dataset_versioner.py
-      replay_buffer.py
-      shadow_trainer.py
-      training_orchestrator.py
-      model_manager.py
-      feedback_validator.py
-    features/
-      manual.py
-      shortcut_manager.py
-      shortcut_config.py
-      toolbar_manager.py
-      toolbar_widget.py
-      toolbar_styles.py
-    datasets/
-    models/
-    main.py
-    requirements.txt
-    run_tests.bat
-  README.md
-  GUID.md
-```
+<br/>
+
+## What's New in v0.2
+
+| Category | Change |
+|:---------|:-------|
+| **Feature** | Freehand region labeling for polygon-style segmentation in manual mode |
+| **Feature** | Manual toolbox mode switch between bounding boxes and freehand regions |
+| **Feature** | Active learning strategy selector with four modes |
+| **Feature** | Previous-image navigation and auto-accepted image log |
+| **Update** | Modular app structure (`src/app`, `src/core`, `src/features`) |
+| **Update** | Retraining policy engine with multi-signal checks |
+| **Update** | Dataset versioning from UI with metadata and hash integrity |
+| **Update** | Label format selection at folder load time |
+| **Update** | Safer persistence: autosave, internal state store, atomic writes |
+| **Update** | Improved manual labeling UX: floating toolbox, shortcuts, inline toolbar |
+| **Update** | Better training controls: force retrain, live status, shadow promotion |
+
+<br/>
 
 ## Installation
 
-```bash
-git clone https://github.com/sairam-s0/ActiveLabelingSystem.git
-cd ActiveLabelingSystem
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# Linux/macOS
-# source .venv/bin/activate
-
-pip install .
-```
-
-Users can install it directly with:
+### From PyPI
 
 ```bash
 pip install Active-Labeling-System
 ```
 
-## Run the app
+### From Source
 
-After install, run the bootstrap/setup command first:
+```bash
+git clone https://github.com/sairam-s0/ActiveLabelingSystem.git
+cd ActiveLabelingSystem
+python -m venv .venv
+```
+
+Activate the virtual environment:
+
+```bash
+# Windows
+.venv\Scripts\activate
+
+# Linux / macOS
+source .venv/bin/activate
+```
+
+Install the package:
+
+```bash
+pip install .
+```
+
+For background training capabilities, include the optional training dependencies:
+
+```bash
+pip install ".[training]"
+```
+
+### System Requirements
+
+| Requirement | Minimum |
+|:------------|:--------|
+| Python | 3.10+ |
+| OS | Windows, Linux, macOS |
+| GPU | Optional (NVIDIA with CUDA recommended for training) |
+
+<br/>
+
+## Quick Start
+
+Run the bootstrap and preflight check:
 
 ```bash
 als
 ```
 
-This command:
+This command performs the following:
 
-- runs `run_tests.bat` on Windows
-- checks Python and runtime dependencies
-- installs missing packages automatically
-- detects GPU hardware
-- installs CUDA-enabled PyTorch automatically for NVIDIA GPUs
-- falls back to CPU mode for unsupported GPU setups
+- Runs `run_tests.bat` on Windows
+- Checks Python version and runtime dependencies
+- Installs missing packages automatically
+- Detects GPU hardware and installs CUDA-enabled PyTorch for NVIDIA GPUs
+- Falls back to CPU mode for unsupported GPU setups
 
-After setup completes, start the GUI with:
+<div align="center">
+  <img src="images/preflight_check_output.png" alt="Preflight Check Output" width="600" />
+  <br/>
+  <sub>Preflight check and setup output.</sub>
+</div>
+
+<br/>
+
+Once setup completes, launch the GUI:
 
 ```bash
 als --start
 ```
 
-## How to use
+<br/>
 
-### 1. Select image folder and output format
+## Usage Guide
 
-- Click `Select Folder`.
-- Choose output format:
-  - `COCO JSON` -> writes `labels_coco.json`
-  - `Plain JSON` -> writes `labels.json`
-- The app also keeps internal state in `.labels_internal.json` and autosave in `labels_autosave.json` inside the selected folder.
+### 1. Select Image Folder and Output Format
 
+Click **Select Folder** and choose the output format:
 
+- **COCO JSON** -- writes `labels_coco.json`
+- **Plain JSON** -- writes `labels.json`
 
-### 2. Select classes
+The app maintains internal state in `.labels_internal.json` and session recovery in `labels_autosave.json` inside the selected folder.
 
-- Click `Select Classes`.
-- Pick one or more classes.
-- Add custom classes from the same dialog when needed.
+<div align="center">
+  <img src="images/folder_selection.png" alt="Folder Selection" width="400" />
+  &nbsp;&nbsp;
+  <img src="images/format_selection.png" alt="Format Selection" width="400" />
+</div>
 
+### 2. Select Classes
 
+Click **Select Classes** to pick one or more detection classes. Custom classes can be added from the same dialog.
 
-### 3. Start labeling
+<div align="center">
+  <img src="images/class_selection.png" alt="Class Selection" width="500" />
+</div>
 
-- Click `START`.
-- Review detections and use bottom actions:
-  - `Previous (P)`
-  - `Accept (A)`
-  - `Reject (R)`
-  - `Skip (N)`
-  - `Manual (M)`
-  - `Log`
+### 3. Start Labeling
 
-### 4. Manual mode (box drawing)
+Click **START** to begin the review loop. Use the bottom action bar:
 
+| Action | Shortcut | Description |
+|:-------|:---------|:------------|
+| Previous | `P` | Navigate to the previous image |
+| Accept | `A` | Accept current detections |
+| Reject | `R` | Reject current detections |
+| Skip | `N` | Skip to next image |
+| Manual | `M` | Enter manual labeling mode |
+| Log | -- | View auto-accepted image log |
 
+### 4. Manual Annotation Mode
 
-- Draw boxes by click-drag on canvas.
-- Switch to `Freehand Region` in the manual toolbox to draw polygon regions.
-- In freehand mode, click points to build a region, then double-click, right-click, or click `Finish Region` to close it.
-- Use `Highlight On/Off` to control shape fill visibility while editing.
-- Save boxes and move next with:
-  - `Space` or `Enter` -> save and next
-  - `Esc` -> exit manual mode
-  - `Ctrl+Z` -> undo last box
-  - `Backspace` -> undo last freehand point
-  - `Delete` -> delete last box
-  - `1..9` -> switch class index
+<div align="center">
+  <img src="images/manual_labelling.png" alt="Manual Labeling" width="700" />
+  <br/>
+  <sub>Manual labeling interface with bounding box and freehand region tools.</sub>
+</div>
 
+<br/>
 
+Draw bounding boxes by click-dragging on the canvas. Switch to **Freehand Region** in the toolbox for polygon annotation. In freehand mode, click to place points, then double-click, right-click, or click **Finish Region** to close the shape.
 
-### 5. Monitor active learning and training
+**Keyboard Shortcuts:**
 
-- Left panel shows:
-  - entropy of current image
-  - queue size
-  - training progress/status.
-- Use `Force Retrain` if you want to bypass normal policy checks (still requires minimum samples).
+| Shortcut | Action |
+|:---------|:-------|
+| `Space` / `Enter` | Save annotations and move to next image |
+| `Esc` | Exit manual mode |
+| `Ctrl+Z` | Undo last box |
+| `Backspace` | Undo last freehand point |
+| `Delete` | Delete last box |
+| `1` -- `9` | Switch class index |
 
+### 5. Monitor Active Learning and Training
 
+The left panel displays:
 
-### 6. Version and promote
+- Entropy score of the current image
+- Queue size and position
+- Training progress and status
 
-- `Create Version` creates a dataset snapshot in `src/datasets/v_YYYYMMDD_HHMMSS/`.
-- `List Versions` shows stored versions and metadata.
-- `Promote Shadow` promotes trained candidate model to active model.
+Use **Force Retrain** to bypass normal policy checks (minimum sample requirement still applies).
 
-## Output files and artifacts
+<div align="center">
+  <img src="images/active_learning_options.png" alt="Active Learning Options" width="500" />
+  &nbsp;&nbsp;
+  <img src="images/dataset_stats.png" alt="Dataset Statistics" width="400" />
+</div>
 
-For each selected image folder:
+### 6. Versioning and Model Promotion
 
-- `labels.json` or `labels_coco.json` (selected format)
-- `.labels_internal.json` (internal metadata store)
-- `labels_autosave.json` (session recovery)
+- **Create Version** -- creates a dataset snapshot in `src/datasets/v_YYYYMMDD_HHMMSS/`
+- **List Versions** -- displays stored versions and metadata
+- **Promote Shadow** -- promotes the trained candidate model to the active model
 
----
-## Future updates
-- sam intergration
-- gpu paralle processing
-- ocr text labelling
-- videos labelling
+<br/>
+
+## Output Files
+
+For each selected image folder, the following files are generated:
+
+| File | Purpose |
+|:-----|:--------|
+| `labels.json` or `labels_coco.json` | Exported annotations in the selected format |
+| `.labels_internal.json` | Internal metadata store |
+| `labels_autosave.json` | Session recovery autosave |
+
+<br/>
+
+## Project Architecture
+
+```text
+ActiveLabelingSystem/
+  images/                         # Screenshots and logo assets
+  src/
+    app/
+      window.py                   # Main application window
+      dialogs.py                  # Dialog components
+      state.py                    # Application state management
+      actions.py                  # UI action handlers
+    core/
+      data_manager.py             # Data I/O and persistence
+      entropy.py                  # Entropy computation
+      sample_selector.py          # Active learning sample selection
+      retrain_policy.py           # Multi-signal retraining policy
+      dataset_versioner.py        # Dataset snapshot versioning
+      replay_buffer.py            # Continual learning replay buffer
+      shadow_trainer.py           # Ray-based background trainer
+      training_orchestrator.py    # Training lifecycle coordination
+      model_manager.py            # Model loading and management
+      feedback_validator.py       # Promotion validation
+    features/
+      manual.py                   # Manual annotation mode
+      shortcut_manager.py         # Keyboard shortcut handling
+      shortcut_config.py          # Shortcut key configuration
+      toolbar_manager.py          # Floating toolbar logic
+      toolbar_widget.py           # Toolbar UI widget
+      toolbar_styles.py           # Toolbar styling
+    datasets/                     # Versioned dataset snapshots
+    models/                       # Trained model weights
+    main.py                       # Application entry point
+  pyproject.toml                  # Build configuration and metadata
+  README.md
+  CONTRIBUTING.md
+  DOCUMENTATION.md
+  LICENSE
+```
+
+<br/>
+
+## Roadmap
+
+- [ ] SAM (Segment Anything Model) integration
+- [ ] GPU parallel processing
+- [ ] OCR text labeling
+- [ ] Video frame labeling
+
+<br/>
 
 ## Notes
 
 - If Ray is unavailable, labeling still works; background training features are reduced.
-- If class mapping is not available yet, trainer creation waits until first labels are saved.
-- Restart app after model promotion for a clean reload of active weights.
+- If class mapping is not yet available, trainer creation waits until labels are first saved.
+- Restart the application after model promotion for a clean reload of active weights.
+
+<br/>
 
 ## Contributing
 
-Please read `CONTRIBUTING.md`.
-
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting pull requests, reporting bugs, and coding standards.
 
 ## License
 
-MIT. See `LICENSE`.
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for full terms.
+
+---
+
+<div align="center">
+  <sub>Built with Python, PyQt6, and Ultralytics YOLOv8</sub>
+</div>
