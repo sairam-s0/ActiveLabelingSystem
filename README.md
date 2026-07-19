@@ -30,6 +30,13 @@ Formerly known as **LabelOps**
 
 Active Labeling System is a desktop application for AI-assisted image labeling that combines YOLO-based object detection with active learning strategies. It prioritizes the most informative images for human review, supports manual bounding box and freehand polygon annotation, and retrains models in the background -- all without requiring cloud connectivity.
 
+<div align="center">
+  <img src="./images/normal_full_gui.png" alt="Application Interface" width="780" />
+  <br/>
+  <sub>Full application interface with detection overlay, review controls, and training status panel.</sub>
+</div>
+
+<br/>
 
 ## Key Features
 

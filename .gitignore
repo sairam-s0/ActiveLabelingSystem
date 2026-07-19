@@ -20,7 +20,6 @@ env/
 .idea/
 
 # Project runtime/generated data (do not push)
-images/
 datasets/
 models/
 src/datasets/
