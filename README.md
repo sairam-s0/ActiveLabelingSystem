@@ -14,7 +14,7 @@ Formerly known as **LabelOps**
 [![License](https://img.shields.io/badge/License-Apache_2.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
 
 [![PyPI Version](https://img.shields.io/pypi/v/Active-Labeling-System?style=flat-square&logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/Active-Labeling-System/)
-[![Azure Pipelines](https://img.shields.io/azure-devops/build/sairam-s0/ActiveLabelingSystem/1?style=flat-square&logo=azure-pipelines&label=Build)](https://dev.azure.com/sairam-s0/ActiveLabelingSystem)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/active-labeling-system?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/active-labeling-system)
 [![GitHub Issues](https://img.shields.io/github/issues/sairam-s0/ActiveLabelingSystem?style=flat-square&logo=github&label=Issues)](https://github.com/sairam-s0/ActiveLabelingSystem/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/sairam-s0/ActiveLabelingSystem?style=flat-square&logo=github&label=Stars)](https://github.com/sairam-s0/ActiveLabelingSystem)
 
