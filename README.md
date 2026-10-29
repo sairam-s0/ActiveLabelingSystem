@@ -12,7 +12,7 @@ Formerly known as **LabelOps**
 [![PyQt6](https://img.shields.io/badge/PyQt6-Desktop_GUI-41CD52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-00FFFF?style=for-the-badge&logo=yolo&logoColor=black)](https://docs.ultralytics.com/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
-
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/active-labeling-system?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/active-labeling-system)
 [![PyPI Version](https://img.shields.io/pypi/v/Active-Labeling-System?style=flat-square&logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/Active-Labeling-System/)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/active-labeling-system?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/active-labeling-system)
 [![GitHub Issues](https://img.shields.io/github/issues/sairam-s0/ActiveLabelingSystem?style=flat-square&logo=github&label=Issues)](https://github.com/sairam-s0/ActiveLabelingSystem/issues)
